@@ -9,8 +9,10 @@ package mls;
  *
  * @author Michele Milidoni <michelemilidoni@gmail.com>
  */
+import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 
 import javax.swing.JPanel;
 
@@ -19,23 +21,23 @@ import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.plot.ValueMarker;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 import org.jfree.ui.ApplicationFrame;
 
-public class FramePlot extends ApplicationFrame {
+public class FramePlot extends JPanel {
 
     private final XYSeries seriesMedia;
     private final XYSeries seriesVarianza;
+    private XYPlot plotMedia;
 
-    public FramePlot(final String title) {
+    public FramePlot() {
 
-        super(title);
         seriesMedia = new XYSeries("Media campionaria (Gordon)");
         seriesVarianza = new XYSeries("Varianza campionaria (Gordon)");
-        
 
         final XYSeriesCollection datasetMedia = new XYSeriesCollection(this.seriesMedia);
         final XYSeriesCollection datasetVarianza = new XYSeriesCollection(this.seriesVarianza);
@@ -50,7 +52,8 @@ public class FramePlot extends ApplicationFrame {
         content.add(chartPanelVarianza, BorderLayout.SOUTH);
         chartPanelMedia.setPreferredSize(new java.awt.Dimension(500, 270));
         chartPanelVarianza.setPreferredSize(new java.awt.Dimension(500, 270));
-        setContentPane(content);
+        add(content);
+        //setContentPane(content);
     }
 
     private JFreeChart createChartMedia(final XYDataset dataset) {
@@ -64,13 +67,13 @@ public class FramePlot extends ApplicationFrame {
                 true,
                 false
         );
-        final XYPlot plot = result.getXYPlot();
-        ValueAxis axis = plot.getDomainAxis();
+        plotMedia = result.getXYPlot();
+        ValueAxis axis = plotMedia.getDomainAxis();
         axis.setAutoRange(true);
-       // axis.setFixedAutoRange(60000.0);  // 60 seconds
-        axis = plot.getRangeAxis();
+        // axis.setFixedAutoRange(60000.0);  // 60 seconds
+        axis = plotMedia.getRangeAxis();
         axis.setRange(0.15, .25);
-        plot.getRenderer().setSeriesPaint(0, Color.BLUE);
+        plotMedia.getRenderer().setSeriesPaint(0, Color.BLUE);
         return result;
     }
 
@@ -102,4 +105,8 @@ public class FramePlot extends ApplicationFrame {
         this.seriesVarianza.add(x, y);
     }
 
+    public void addMarker(double val, Color colore) {
+        ValueMarker mark = new ValueMarker(val, colore, new BasicStroke(1));
+        plotMedia.addRangeMarker(mark);
+    }
 }

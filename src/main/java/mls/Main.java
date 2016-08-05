@@ -5,8 +5,8 @@
  */
 package mls;
 
+import java.awt.Color;
 import java.util.Arrays;
-import java.util.GregorianCalendar;
 import java.util.PriorityQueue;
 import java.util.Stack;
 import java.util.logging.Level;
@@ -14,6 +14,7 @@ import java.util.logging.Logger;
 import mls.generatori.Generatore3Erlangiano;
 import mls.generatori.GeneratoreEsponenziale;
 import mls.generatori.GeneratoreUniforme;
+import mls.util.Clona;
 import mls.util.EventoComparator;
 import mls.util.JobComparator;
 import mls.util.TipoEvento;
@@ -29,24 +30,39 @@ public class Main {
     private PriorityQueue<Job> cpuQueue;
     private Stack<Job> ioQueue;
 //    private int clock;
-    private GeneratoreEsponenziale genExp;
-    private GeneratoreUniforme genUni;
-    private Generatore3Erlangiano gen3Erl;
+    private final GeneratoreEsponenziale genExp;
+    private final GeneratoreUniforme genUni;
+    private final Generatore3Erlangiano gen3Erl;
     private Job jobCorrenteCpu;
     private Job jobCorrenteIO;
-    private int p, n0, i, j, nOss = 0, nRun = 0;
-    private double tempiRisposta[][];
+    private int p;
+    private int n0, nRun = 0, nOss = 0;
+    private final double uSommaG[];
+    private final double en[];
+    private final double vc[];
+    private double x[];
+    private double y[];
+    private double uSommaStat;
     private boolean stop = false;
-    private FramePlot frame;
+    private final FrameWin frame;
+    private boolean stabile = false;
 
-    public Main(double gamma, double mu, int p, int n0, FramePlot frame) {
+    private PriorityQueue<Job> cpuQueueStabile;
+    private Stack<Job> ioQueueStabile;
+    private PriorityQueue<Evento> calendarioStabile;
+    private Job jobCorrenteCpuStabile;
+    private Job jobCorrenteIOStabile;
+
+    public Main(double gamma, double mu, int p, int n0, FrameWin frame) {
         genUni = new GeneratoreUniforme();
         genExp = new GeneratoreEsponenziale(gamma, genUni);
         gen3Erl = new Generatore3Erlangiano(mu, new GeneratoreEsponenziale(mu, genUni));
 //      clock = 0;
         this.p = p;
         this.n0 = n0;
-        tempiRisposta = new double[p][n0];
+        uSommaG = new double[p];
+        en = new double[n0];
+        vc = new double[n0];
         this.frame = frame;
         this.frame.pack();
         RefineryUtilities.centerFrameOnScreen(this.frame);
@@ -60,17 +76,55 @@ public class Main {
         ioQueue = new Stack<>();
         jobCorrenteCpu = null;
         jobCorrenteIO = null;
+    }
+
+    private void statoEquilibrio() {
+        //TODO: implementare lo stato di equilibrio
+        cpuQueue = Clona.cpuQueue(cpuQueueStabile);
+        calendario = Clona.calendario(calendarioStabile);
+        ioQueue = Clona.ioQueue(ioQueueStabile);
+        if (jobCorrenteCpuStabile != null) {
+            jobCorrenteCpu = jobCorrenteCpuStabile.clona();
+        }
+        if (jobCorrenteIOStabile != null) {
+            jobCorrenteIO = jobCorrenteIOStabile.clona();
+        }
+        uSommaStat = 0d;
+        setN0(genUni.next(50, 100));
         nOss = 0;
     }
 
+    private void setStatoEquilibrio() {
+        x = new double[p];
+        y = new double[p];
+        cpuQueueStabile = Clona.cpuQueue(cpuQueue);
+        ioQueueStabile = Clona.ioQueue(ioQueue);
+        calendarioStabile = Clona.calendario(calendario);
+        if (jobCorrenteCpu != null) {
+            jobCorrenteCpuStabile = jobCorrenteCpu.clona();
+        }
+        if (jobCorrenteIO != null) {
+            jobCorrenteIOStabile = jobCorrenteIO.clona();
+        }
+    }
+
     public static void main(String[] args) {
-        int nn0 = 100;
-        int pp = 40;
-        FramePlot frame = new FramePlot("Plot");
-        for (int n = 1; n <= nn0; n++) {
-            Main m = new Main(0.5, 0.5, pp, n, frame);
+        int nMax = 10000;
+        int pp = 30;
+        FrameWin frame = new FrameWin();
+        Main m = new Main(0.3, 0.5, pp, nMax, frame);
+        frame.setMain(m);
+        for (int n = 1; n <= nMax; n++) {
+            m.statoIniziale();
+            m.setN0(n);
             m.sequenziatore();
         }
+    }
+
+    public void setN0(int n0) {
+        this.n0 = n0;
+        stop = false;
+        System.out.println("imposto n0 = " + n0);
     }
 
     private void sequenziatore() {
@@ -132,20 +186,55 @@ public class Main {
                 //System.out.println("metto il job in ioQueue");
             }
 
-        } else {
-            //temp.setTempoUscita(new GregorianCalendar());
-            //System.out.println("entro nella fase di stab o stat");
-            //TODO: implementare fase di stabilizzazione 
-            tempiRisposta[nRun][nOss++] = jobCorrenteCpu.getCarico();
+        } else if (!stabile) {
+            uSommaG[nRun++] += jobCorrenteCpu.getCarico();
 
-            //trSomma += temp.getTempoRisposta();
-            if (nOss == n0) {
-                statoIniziale();
-                nRun++;
+            if (nRun == p) {
+                double temp = 0;
+                for (int jj = 0; jj < p; jj++) {
+                    temp += uSommaG[jj] / n0;
+                }
+                en[n0 - 1] = temp / p;
+
+                double temp2 = 0;
+                for (int jj = 0; jj < p; jj++) {
+                    temp2 += Math.pow(uSommaG[jj] / n0 - en[n0 - 1], 2);
+                }
+                vc[n0 - 1] = temp2 / (p - 1);
+
+//                System.out.println(n0 + "\t" + en[n0 - 1]);
+                frame.getPlot().addSerieMedia(n0 - 1, en[n0 - 1]);
+                frame.getPlot().addSerieVarianza(n0 - 1, vc[n0 - 1]);
+                if (n0 % 10 == 0) {
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException ex) {
+                        Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+                nRun = 0;
+                stop = true;
             }
 
-            //TODO: implementare fase statistica
+            statoIniziale();
+
+        } else {
+            uSommaStat += jobCorrenteCpu.getCarico();
+            nOss++;
+
+            if (nOss == n0) {
+                y[nRun] = n0;
+                x[nRun] = uSommaStat;
+                nRun++;
+                stop = true;
+                statoEquilibrio();
+            }
+
+            if (nRun == p) {
+                calendario.add(new Evento(0d, TipoEvento.FINE_SIMULAZIONE));
+            }
         }
+
         jobCorrenteCpu = null;
 
         if (!cpuQueue.isEmpty()) {
@@ -179,35 +268,55 @@ public class Main {
     }
 
     private void fineSimulazione() {
-        //printArray(tempiRisposta);
-
-        double uSommaMedia = 0;
+        double xSegn = 0;
+        double ySegn = 0;
         for (int jj = 0; jj < p; jj++) {
-            double uSomma = 0;
-            for (int ii = 0; ii < n0; ii++) {
-                uSomma += tempiRisposta[jj][ii];
-            }
-            uSommaMedia += uSomma / n0;
+            xSegn += x[jj];
+            ySegn += y[jj];
         }
-        double en = Math.round(uSommaMedia / p * 10000) / 10000d;
+        xSegn /= p;
+        ySegn /= p;
 
-        double uSommaDiff = 0;
+        double xSommaQDiff = 0;
+        double ySommaQDiff = 0;
+        double xySommaQDiff = 0;
         for (int jj = 0; jj < p; jj++) {
-            double uSomma = 0;
-            for (int ii = 0; ii < n0; ii++) {
-                uSomma += tempiRisposta[jj][ii];
-            }
-            uSommaDiff += Math.pow(uSomma / n0 - en, 2);
+            xSommaQDiff += Math.pow(x[jj] - xSegn, 2);
+            ySommaQDiff += Math.pow(y[jj] - ySegn, 2);
+            xySommaQDiff += (x[jj] - xSegn) * (y[jj] - ySegn);
         }
-        
-        double vc = Math.round((uSommaDiff / (p-1)) * 10000) / 10000d;
 
-       // System.out.println(n0 + " " + en + "\t" + vc);
-        frame.addSerieMedia(n0, en);
-        frame.addSerieVarianza(n0, vc);
+        double s2_11 = xSommaQDiff / (p - 1);
+        double s2_22 = ySommaQDiff / (p - 1);
+        double s2_12 = xySommaQDiff / (p - 1);
 
-        //      System.out.println("----------------");
+        double f = xSegn / ySegn;
+        double s2 = s2_11 - 2 * f * s2_12 + f * f * s2_22;
+        double d = Math.sqrt(s2) / (ySegn * Math.sqrt(p));
+        double mediaInferiore = f - d * 1.645;
+        double mediaSuperiore = f + d * 1.645;
+
+        frame.getPlot().addMarker(f, Color.GREEN);
+        frame.getPlot().addMarker(mediaInferiore, Color.RED);
+        frame.getPlot().addMarker(mediaSuperiore, Color.RED);
+        System.out.println("inf: " + mediaInferiore);
+        System.out.println("cen: " + f);
+        System.out.println("sup: " + mediaSuperiore);
+
         stop = true;
+        try {
+            Thread.sleep(10000);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        System.exit(0);
+    }
+
+    public void setStabile() {
+        p = 40;
+        setStatoEquilibrio();
+        this.stabile = true;
+        statoEquilibrio();
     }
 
     private static void printArray(double matrix[][]) {

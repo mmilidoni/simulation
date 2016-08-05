@@ -36,6 +36,7 @@ public class Job {
 
     public Job clona() {
         Job j = new Job();
+        j.carico = this.carico;
         return j;
     }
 }

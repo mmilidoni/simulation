@@ -34,4 +34,9 @@ public class GeneratoreUniforme {
         double r = (double) xi / m;
         return r;
     }
+
+    public int next(int a, int b) {
+        double i = next();
+        return (int) (i * (b - a) + a);
+    }
 }

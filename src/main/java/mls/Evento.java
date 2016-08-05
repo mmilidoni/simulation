@@ -29,4 +29,8 @@ public class Evento {
         return tipo;
     }
 
+    public Evento clona() {
+        return new Evento(orario, tipo);
+    }
+
 }
