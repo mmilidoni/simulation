@@ -1,0 +1,89 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package mls;
+
+import static mls.util.TipoEvento.ARRIVO;
+import static mls.util.TipoEvento.FINE_CPU;
+import static mls.util.TipoEvento.FINE_IO;
+import static mls.util.TipoEvento.FINE_SIMULAZIONE;
+
+/**
+ *
+ * @author Michele Milidoni <michelemilidoni@gmail.com>
+ */
+public class Calendario {
+
+    private Evento arrivo;
+    private Evento cpu;
+    private Evento io;
+    private Evento simulazione;
+
+    public Calendario() {
+        arrivo = new Evento(Double.MAX_VALUE, ARRIVO);
+        cpu = new Evento(Double.MAX_VALUE, FINE_CPU);
+        io = new Evento(Double.MAX_VALUE, FINE_IO);
+        simulazione = new Evento(Double.MAX_VALUE, FINE_SIMULAZIONE);
+    }
+
+    public Evento next() {
+        Evento out = null;
+        double min = Double.MAX_VALUE;
+
+        if (arrivo.getOrario() < min) {
+            min = arrivo.getOrario();
+            out = arrivo;
+        }
+        if (cpu.getOrario() < min) {
+            min = cpu.getOrario();
+            out = cpu;
+        }
+        if (io.getOrario() < min) {
+            min = io.getOrario();
+            out = io;
+        }
+        if (simulazione.getOrario() < min) {
+            min = simulazione.getOrario();
+            out = simulazione;
+        }
+
+        return out;
+    }
+
+    public Evento getArrivo() {
+        return arrivo;
+    }
+
+    public void setArrivo(Evento arrivo) {
+        this.arrivo = arrivo;
+    }
+
+    public Evento getCpu() {
+        return cpu;
+    }
+
+    public void setCpu(Evento cpu) {
+        this.cpu = cpu;
+    }
+
+    public Evento getIo() {
+        return io;
+    }
+
+    public void setIo(Evento io) {
+        this.io = io;
+    }
+
+    public Evento getSimulazione() {
+        return simulazione;
+    }
+
+    public void setSimulazione(Evento simulazione) {
+        this.simulazione = simulazione;
+    }
+    
+    
+
+}
