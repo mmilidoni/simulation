@@ -15,39 +15,15 @@ import java.util.Random;
 public class Job {
 
     private final long id;
-    private GregorianCalendar tempoArrivo;
-    private GregorianCalendar tempoUscita;
     private Double carico;
 
     public Job() {
         id = new Random().nextInt(500000);
-        tempoArrivo = new GregorianCalendar();
-        tempoUscita = null;
         carico = 0.;
     }
 
     public Long getId() {
         return id;
-    }
-
-    public GregorianCalendar getTempoArrivo() {
-        return tempoArrivo;
-    }
-
-    public void setTempoArrivo(GregorianCalendar tempoArrivo) {
-        this.tempoArrivo = tempoArrivo;
-    }
-
-    public GregorianCalendar getTempoUscita() {
-        return tempoUscita;
-    }
-
-    public void setTempoUscita(GregorianCalendar tempoUscita) {
-        this.tempoUscita = tempoUscita;
-    }
-
-    public long getTempoRisposta() {
-        return tempoUscita.getTimeInMillis() - tempoArrivo.getTimeInMillis();
     }
 
     public Double getCarico() {
@@ -60,8 +36,6 @@ public class Job {
 
     public Job clona() {
         Job j = new Job();
-        j.setTempoArrivo(tempoArrivo);
-        
         return j;
     }
 }

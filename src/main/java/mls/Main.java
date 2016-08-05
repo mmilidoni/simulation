@@ -126,16 +126,17 @@ public class Main {
                 calendario.add(new Evento(jobCorrenteIO.getCarico(), TipoEvento.FINE_IO));
                 //System.out.println("imposto jobCorrenteIO da CPU");
             } else {
-                ioQueue.add(jobCorrenteCpu.clona());
+                Job temp = jobCorrenteCpu.clona();
+                temp.setCarico(gen3Erl.next());
+                ioQueue.add(temp);
                 //System.out.println("metto il job in ioQueue");
             }
 
         } else {
-            Job temp = jobCorrenteCpu.clona();
             //temp.setTempoUscita(new GregorianCalendar());
             //System.out.println("entro nella fase di stab o stat");
             //TODO: implementare fase di stabilizzazione 
-            tempiRisposta[nRun][nOss++] = temp.getCarico();
+            tempiRisposta[nRun][nOss++] = jobCorrenteCpu.getCarico();
 
             //trSomma += temp.getTempoRisposta();
             if (nOss == n0) {
@@ -162,7 +163,9 @@ public class Main {
             calendario.add(new Evento(jobCorrenteCpu.getCarico(), TipoEvento.FINE_CPU));
             //System.out.println("imposto jobCorrenteCpu da IO");
         } else {
-            cpuQueue.add(jobCorrenteIO.clona());
+            Job temp  = jobCorrenteIO.clona();
+            temp.setCarico(gen3Erl.next());
+            cpuQueue.add(temp);
             //System.out.println("metto il job in cpuQueue");
         }
         jobCorrenteIO = null;
@@ -180,7 +183,7 @@ public class Main {
 
         double uSommaMedia = 0;
         for (int jj = 0; jj < p; jj++) {
-            long uSomma = 0;
+            double uSomma = 0;
             for (int ii = 0; ii < n0; ii++) {
                 uSomma += tempiRisposta[jj][ii];
             }
@@ -194,14 +197,14 @@ public class Main {
          */
 
         System.out.println(n0 + " " + en);
-        frame.addSerie(n0, en);
-        
+        frame.addSerieMedia(n0, en);
+
         //      System.out.println("----------------");
         stop = true;
     }
 
-    private static void printArray(long matrix[][]) {
-        for (long[] row : matrix) {
+    private static void printArray(double matrix[][]) {
+        for (double[] row : matrix) {
             System.out.println(Arrays.toString(row));
         }
     }
