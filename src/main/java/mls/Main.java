@@ -66,7 +66,7 @@ public class Main {
     public static void main(String[] args) {
         int nn0 = 100;
         int pp = 40;
-        FramePlot frame = new FramePlot("Media campionaria", nn0);
+        FramePlot frame = new FramePlot("Plot");
         for (int n = 1; n <= nn0; n++) {
             Main m = new Main(0.5, 0.5, pp, n, frame);
             m.sequenziatore();
@@ -163,7 +163,7 @@ public class Main {
             calendario.add(new Evento(jobCorrenteCpu.getCarico(), TipoEvento.FINE_CPU));
             //System.out.println("imposto jobCorrenteCpu da IO");
         } else {
-            Job temp  = jobCorrenteIO.clona();
+            Job temp = jobCorrenteIO.clona();
             temp.setCarico(gen3Erl.next());
             cpuQueue.add(temp);
             //System.out.println("metto il job in cpuQueue");
@@ -190,14 +190,21 @@ public class Main {
             uSommaMedia += uSomma / n0;
         }
         double en = Math.round(uSommaMedia / p * 10000) / 10000d;
-        /*
-        System.out.println("somma media:" + uSommaMedia);
-        System.out.println("p:" + p);
-        System.out.println("n0:" + n0);
-         */
 
-        System.out.println(n0 + " " + en);
+        double uSommaDiff = 0;
+        for (int jj = 0; jj < p; jj++) {
+            double uSomma = 0;
+            for (int ii = 0; ii < n0; ii++) {
+                uSomma += tempiRisposta[jj][ii];
+            }
+            uSommaDiff += Math.pow(uSomma / n0 - en, 2);
+        }
+        
+        double vc = Math.round((uSommaDiff / (p-1)) * 10000) / 10000d;
+
+       // System.out.println(n0 + " " + en + "\t" + vc);
         frame.addSerieMedia(n0, en);
+        frame.addSerieVarianza(n0, vc);
 
         //      System.out.println("----------------");
         stop = true;

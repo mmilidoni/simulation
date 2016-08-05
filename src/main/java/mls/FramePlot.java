@@ -10,6 +10,7 @@ package mls;
  * @author Michele Milidoni <michelemilidoni@gmail.com>
  */
 import java.awt.BorderLayout;
+import java.awt.Color;
 
 import javax.swing.JPanel;
 
@@ -29,16 +30,17 @@ public class FramePlot extends ApplicationFrame {
     private final XYSeries seriesMedia;
     private final XYSeries seriesVarianza;
 
-    public FramePlot(final String title, int maxRangeY) {
+    public FramePlot(final String title) {
 
         super(title);
-        seriesMedia = new XYSeries(title);
-        seriesVarianza = new XYSeries(title);
+        seriesMedia = new XYSeries("Media campionaria (Gordon)");
+        seriesVarianza = new XYSeries("Varianza campionaria (Gordon)");
+        
 
         final XYSeriesCollection datasetMedia = new XYSeriesCollection(this.seriesMedia);
         final XYSeriesCollection datasetVarianza = new XYSeriesCollection(this.seriesVarianza);
-        final JFreeChart chartMedia = createChartMedia(datasetMedia, maxRangeY);
-        final JFreeChart chartVarianza = createChartVarianza(datasetVarianza, maxRangeY);
+        final JFreeChart chartMedia = createChartMedia(datasetMedia);
+        final JFreeChart chartVarianza = createChartVarianza(datasetVarianza);
 
         final ChartPanel chartPanelMedia = new ChartPanel(chartMedia);
         final ChartPanel chartPanelVarianza = new ChartPanel(chartVarianza);
@@ -51,7 +53,7 @@ public class FramePlot extends ApplicationFrame {
         setContentPane(content);
     }
 
-    private JFreeChart createChartMedia(final XYDataset dataset, int maxRangeY) {
+    private JFreeChart createChartMedia(final XYDataset dataset) {
         final JFreeChart result = ChartFactory.createXYLineChart(
                 "Media campionaria",
                 "n",
@@ -67,11 +69,12 @@ public class FramePlot extends ApplicationFrame {
         axis.setAutoRange(true);
        // axis.setFixedAutoRange(60000.0);  // 60 seconds
         axis = plot.getRangeAxis();
-        axis.setRange(0.0, maxRangeY);
+        axis.setRange(0.15, .25);
+        plot.getRenderer().setSeriesPaint(0, Color.BLUE);
         return result;
     }
 
-    private JFreeChart createChartVarianza(final XYDataset datasetVarianza, int maxRangeY) {
+    private JFreeChart createChartVarianza(final XYDataset datasetVarianza) {
         final JFreeChart result = ChartFactory.createXYLineChart(
                 "Varianza campionaria",
                 "n",
@@ -85,9 +88,9 @@ public class FramePlot extends ApplicationFrame {
         final XYPlot plot = result.getXYPlot();
         ValueAxis axis = plot.getDomainAxis();
         axis.setAutoRange(true);
-       // axis.setFixedAutoRange(60000.0);  // 60 seconds
         axis = plot.getRangeAxis();
-        axis.setRange(0.0, maxRangeY);
+        axis.setRange(0.0, .04);
+        plot.getRenderer().setSeriesPaint(0, Color.MAGENTA);
         return result;
     }
 
