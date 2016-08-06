@@ -26,7 +26,6 @@ import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
-import org.jfree.ui.ApplicationFrame;
 
 public class FramePlot extends JPanel {
 
@@ -49,7 +48,7 @@ public class FramePlot extends JPanel {
 
         final JPanel content = new JPanel(new BorderLayout());
         content.add(chartPanelMedia);
-        content.add(chartPanelVarianza, BorderLayout.SOUTH);
+        content.add(chartPanelVarianza, BorderLayout.EAST);
         chartPanelMedia.setPreferredSize(new java.awt.Dimension(500, 270));
         chartPanelVarianza.setPreferredSize(new java.awt.Dimension(500, 270));
         add(content);
