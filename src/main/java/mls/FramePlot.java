@@ -32,6 +32,7 @@ public class FramePlot extends JPanel {
     private final XYSeries seriesMedia;
     private final XYSeries seriesVarianza;
     private XYPlot plotMedia;
+    private ChartPanel chartPanelMedia;
 
     public FramePlot() {
 
@@ -43,9 +44,9 @@ public class FramePlot extends JPanel {
         final JFreeChart chartMedia = createChartMedia(datasetMedia);
         final JFreeChart chartVarianza = createChartVarianza(datasetVarianza);
 
-        final ChartPanel chartPanelMedia = new ChartPanel(chartMedia);
+        chartPanelMedia = new ChartPanel(chartMedia);
         final ChartPanel chartPanelVarianza = new ChartPanel(chartVarianza);
-
+        
         final JPanel content = new JPanel(new BorderLayout());
         content.add(chartPanelMedia);
         content.add(chartPanelVarianza, BorderLayout.EAST);
@@ -98,6 +99,7 @@ public class FramePlot extends JPanel {
 
     public void addSerieMedia(double x, double y) {
         this.seriesMedia.add(x, y);
+        chartPanelMedia.repaint();
     }
 
     public void addSerieVarianza(double x, double y) {

@@ -29,6 +29,7 @@ public class Main {
     private PriorityQueue<Evento> calendario;
     private PriorityQueue<Job> cpuQueue;
     private Stack<Job> ioQueue;
+//    private int clock;
     private GeneratoreEsponenziale genExp;
     private GeneratoreUniforme genUni;
     private Generatore3Erlangiano gen3Erl;
@@ -37,13 +38,13 @@ public class Main {
     private int p;
     private int n0, nRun = 0, nOss = 0;
     private double uSommaG[];
-    private double en[];
-    private double vc[];
+    private final double en[];
+    private final double vc[];
     private double x[];
     private double y[];
     private double uSommaStat;
     private boolean stop = false;
-    private FrameWin frame;
+    private final FrameWin frame;
     private boolean stabile = false;
 
     private PriorityQueue<Job> cpuQueueStabile;
@@ -52,25 +53,7 @@ public class Main {
     private Job jobCorrenteCpuStabile;
     private Job jobCorrenteIOStabile;
 
-    public Main() {
-        /*
-        genUni = new GeneratoreUniforme();
-        genExp = new GeneratoreEsponenziale(gamma, genUni);
-        gen3Erl = new Generatore3Erlangiano(mu, new GeneratoreEsponenziale(mu, genUni));
-        this.p = p;
-        this.n0 = n0;
-        uSommaG = new double[p];
-        en = new double[n0];
-        vc = new double[n0];
-        this.frame = frame;
-        this.frame.pack();
-        RefineryUtilities.centerFrameOnScreen(this.frame);
-        this.frame.setVisible(true);
-        statoIniziale();
-         */
-    }
-/*
-    private void init(double gamma, double mu, int p, int n0, FrameWin frame) {
+    public Main(double gamma, double mu, int p, int n0, FrameWin frame) {
         genUni = new GeneratoreUniforme();
         genExp = new GeneratoreEsponenziale(gamma, genUni);
         gen3Erl = new Generatore3Erlangiano(mu, new GeneratoreEsponenziale(mu, genUni));
@@ -85,33 +68,22 @@ public class Main {
         this.frame.setVisible(true);
         statoIniziale();
     }
-*/
-    
-    public void avviaSimulazione(int p, double gamma, double lambda) {
-        int nMax = 10000;
 
+    public void avviaSimulazione(int p, double gamma, double mu) {
         genUni = new GeneratoreUniforme();
         genExp = new GeneratoreEsponenziale(gamma, genUni);
-        gen3Erl = new Generatore3Erlangiano(lambda, new GeneratoreEsponenziale(lambda, genUni));
+        gen3Erl = new Generatore3Erlangiano(mu, new GeneratoreEsponenziale(mu, genUni));
         this.p = p;
-        this.n0 = nMax;
         uSommaG = new double[p];
-        en = new double[n0];
-        vc = new double[n0];
-        
-        statoIniziale();
-        
-        //int nMax = 10000;
-        //Main m = new Main(gamma, lambda, p, nMax, frame2);
-        //frame2.setMain(m);
-        for (int n = 1; n <= nMax; n++) {
+        for (int n = 1; n <= 100; n++) {
             statoIniziale();
             setN0(n);
             sequenziatore();
         }
+
     }
 
-    public void statoIniziale() {
+    private void statoIniziale() {
         cpuQueue = new PriorityQueue<>(new JobComparator());
         calendario = new PriorityQueue<>(new EventoComparator());
         ioQueue = new Stack<>();
@@ -150,14 +122,18 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        
+        int nMax = 10000;
+        int pp = 30;
         FrameWin frame = new FrameWin();
-        Main m = new Main();
-        m.frame = frame;
-        m.frame.setMain(m);
-        m.frame.pack();
-        RefineryUtilities.centerFrameOnScreen(m.frame);
-        m.frame.setVisible(true);
+        Main m = new Main(30, 0.5, pp, nMax, frame);
+//        frame.setMain(m);
+        /*
+        for (int n = 1; n <= nMax; n++) {
+            m.statoIniziale();
+            m.setN0(n);
+            m.sequenziatore();
+        }
+         */
     }
 
     public void setN0(int n0) {
@@ -166,7 +142,7 @@ public class Main {
         System.out.println("imposto n0 = " + n0);
     }
 
-    public void sequenziatore() {
+    private void sequenziatore() {
         while (!stop) {
             if (nRun == p) {
                 calendario.add(new Evento(0d, TipoEvento.FINE_SIMULAZIONE));
@@ -242,8 +218,8 @@ public class Main {
                 vc[n0 - 1] = temp2 / (p - 1);
 
 //                System.out.println(n0 + "\t" + en[n0 - 1]);
-                frame.getPlot().addSerieMedia(n0 - 1, en[n0 - 1]);
-                frame.getPlot().addSerieVarianza(n0 - 1, vc[n0 - 1]);
+//                frame.getPlot().addSerieMedia(n0 - 1, en[n0 - 1]);
+  //              frame.getPlot().addSerieVarianza(n0 - 1, vc[n0 - 1]);
                 if (n0 % 10 == 0) {
                     try {
                         Thread.sleep(100);
@@ -334,10 +310,11 @@ public class Main {
         double d = Math.sqrt(s2) / (ySegn * Math.sqrt(p));
         double mediaInferiore = f - d * 1.645;
         double mediaSuperiore = f + d * 1.645;
-
+/*
         frame.getPlot().addMarker(f, Color.GREEN);
         frame.getPlot().addMarker(mediaInferiore, Color.RED);
         frame.getPlot().addMarker(mediaSuperiore, Color.RED);
+*/
         System.out.println("inf: " + mediaInferiore);
         System.out.println("cen: " + f);
         System.out.println("sup: " + mediaSuperiore);
