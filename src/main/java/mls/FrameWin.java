@@ -6,21 +6,29 @@
 package mls;
 
 import java.awt.Color;
+import java.text.DecimalFormat;
+import java.util.LinkedList;
 import java.util.PriorityQueue;
+import java.util.Queue;
 import java.util.Stack;
+import java.util.concurrent.Semaphore;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.ImageIcon;
-import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import mls.generatori.Generatore3Erlangiano;
 import mls.generatori.GeneratoreEsponenziale;
+import mls.generatori.GeneratorePoissoniano;
 import mls.generatori.GeneratoreUniforme;
 import mls.util.Clona;
+import mls.util.Coda;
+import mls.util.CodaFIFO;
+import mls.util.CodaLIFO;
+import mls.util.CodaSPTF;
 import mls.util.EventoComparator;
+import mls.util.Generatore;
 import mls.util.JobComparator;
+import mls.util.StatoCorrente;
 import mls.util.TipoEvento;
-import org.jfree.ui.RefineryUtilities;
 
 /**
  *
@@ -29,12 +37,12 @@ import org.jfree.ui.RefineryUtilities;
 public class FrameWin extends javax.swing.JFrame {
 
     private PriorityQueue<Evento> calendario;
-    private PriorityQueue<Job> cpuQueue;
-    private Stack<Job> ioQueue;
-//    private int clock;
-    private GeneratoreEsponenziale genExp;
+    private Coda<Job> cpuQueue;
+    private Coda<Job> ioQueue;
+
+    private Generatore genArrivi;
+    private Generatore genCentri;
     private GeneratoreUniforme genUni;
-    private Generatore3Erlangiano gen3Erl;
     private Job jobCorrenteCpu;
     private Job jobCorrenteIO;
     private int p;
@@ -45,34 +53,33 @@ public class FrameWin extends javax.swing.JFrame {
     private double x[];
     private double y[];
     private double uSommaStat;
-    private boolean stop = false;
+    private boolean stopSequenziatore = false;
     private boolean stabile = false;
+    private boolean convalida = false;
 
-    private PriorityQueue<Job> cpuQueueStabile;
-    private Stack<Job> ioQueueStabile;
+    private Coda<Job> cpuQueueStabile;
+    private Coda<Job> ioQueueStabile;
     private PriorityQueue<Evento> calendarioStabile;
     private Job jobCorrenteCpuStabile;
     private Job jobCorrenteIOStabile;
+
+    private final DecimalFormat df;
+    private String testoOut = "";
+    private boolean fineSimulazione = false;
+
+    private StatoCorrente[] statiCorrenti;
+    
+    private final Semaphore semaforo;
 
     /**
      * Creates new form FrameWin
      */
     public FrameWin() {
         initComponents();
-        /*
-        genUni = new GeneratoreUniforme();
-        genExp = new GeneratoreEsponenziale(gamma, genUni);
-        gen3Erl = new Generatore3Erlangiano(mu, new GeneratoreEsponenziale(mu, genUni));
-        this.p = p;
-        this.n0 = n0;
-        uSommaG = new double[p];
-        en = new double[n0];
-        vc = new double[n0];
-        this.pack();
-        RefineryUtilities.centerFrameOnScreen(this);
-//        this.frame.setVisible(true);
-        statoIniziale();
-         */
+        buttonAvvia.setEnabled(true);
+        buttonStabile.setEnabled(false);
+        df = new DecimalFormat("#.####");
+        semaforo = new Semaphore(1);
     }
 
     /**
@@ -96,19 +103,39 @@ public class FrameWin extends javax.swing.JFrame {
         jLabel3 = new javax.swing.JLabel();
         textP = new javax.swing.JFormattedTextField();
         jLabel5 = new javax.swing.JLabel();
-        textLabda = new javax.swing.JFormattedTextField();
+        textTs = new javax.swing.JFormattedTextField();
+        buttonAvvia1 = new javax.swing.JButton();
+        jSeparator5 = new javax.swing.JSeparator();
         jLabel7 = new javax.swing.JLabel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        textOutput = new javax.swing.JTextPane();
         jSeparator2 = new javax.swing.JSeparator();
         framePlot1 = new mls.FramePlot();
         buttonStabile = new javax.swing.JButton();
         jLabel8 = new javax.swing.JLabel();
         jSeparator3 = new javax.swing.JSeparator();
+        jPanel3 = new javax.swing.JPanel();
+        jSeparator4 = new javax.swing.JSeparator();
+        jPanel4 = new javax.swing.JPanel();
+        textPuntoCentrale = new javax.swing.JTextField();
+        textLimiteSuperiore = new javax.swing.JTextField();
+        jLabel13 = new javax.swing.JLabel();
+        jLabel15 = new javax.swing.JLabel();
+        jLabel14 = new javax.swing.JLabel();
+        textLimiteInferiore = new javax.swing.JTextField();
+        jPanel5 = new javax.swing.JPanel();
+        textGeneratoreCentri = new javax.swing.JTextField();
+        jLabel10 = new javax.swing.JLabel();
+        jLabel12 = new javax.swing.JLabel();
+        textCodaCPU = new javax.swing.JTextField();
+        jLabel11 = new javax.swing.JLabel();
+        textGeneratoreArrivi = new javax.swing.JTextField();
+        jLabel9 = new javax.swing.JLabel();
+        textCodaIO = new javax.swing.JTextField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Milidoni MLS Parte2");
         setBackground(new java.awt.Color(254, 254, 254));
-
-        jPanel2.setBackground(new java.awt.Color(254, 254, 254));
 
         jLabel1.setFont(new java.awt.Font("Ubuntu", 0, 24)); // NOI18N
         jLabel1.setText("Sistema simulato");
@@ -117,13 +144,10 @@ public class FrameWin extends javax.swing.JFrame {
 
         jSeparator1.setOrientation(javax.swing.SwingConstants.VERTICAL);
 
-        jPanel1.setBackground(new java.awt.Color(254, 254, 254));
-
-        textGamma.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter()));
         textGamma.setText("30");
 
         buttonAvvia.setFont(new java.awt.Font("Ubuntu", 0, 18)); // NOI18N
-        buttonAvvia.setText("Avvia simulazione");
+        buttonAvvia.setText("Simula");
         buttonAvvia.setToolTipText("");
         buttonAvvia.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -146,13 +170,21 @@ public class FrameWin extends javax.swing.JFrame {
             }
         });
 
-        jLabel5.setText("Lambda");
+        jLabel5.setText("Ts");
 
-        textLabda.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter()));
-        textLabda.setText("0.5");
-        textLabda.addActionListener(new java.awt.event.ActionListener() {
+        textTs.setText("0.5");
+        textTs.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                textLabdaActionPerformed(evt);
+                textTsActionPerformed(evt);
+            }
+        });
+
+        buttonAvvia1.setFont(new java.awt.Font("Ubuntu", 0, 18)); // NOI18N
+        buttonAvvia1.setText("Convalida");
+        buttonAvvia1.setToolTipText("");
+        buttonAvvia1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                buttonAvvia1ActionPerformed(evt);
             }
         });
 
@@ -163,17 +195,18 @@ public class FrameWin extends javax.swing.JFrame {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGap(48, 48, 48))
-            .addComponent(buttonAvvia, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel6)
-                    .addComponent(jLabel5)
-                    .addComponent(jLabel4))
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                    .addComponent(buttonAvvia, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel6, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel5, javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel4, javax.swing.GroupLayout.Alignment.LEADING))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(textGamma)
-                    .addComponent(textLabda)
-                    .addComponent(textP)))
+                    .addComponent(textTs)
+                    .addComponent(textP)
+                    .addComponent(buttonAvvia1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -186,14 +219,26 @@ public class FrameWin extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel5)
-                    .addComponent(textLabda, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(textTs, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel6)
                     .addComponent(textP, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(buttonAvvia, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 38, Short.MAX_VALUE)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(buttonAvvia, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(buttonAvvia1, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)))
         );
+
+        jSeparator5.setOrientation(javax.swing.SwingConstants.VERTICAL);
+
+        jLabel7.setFont(new java.awt.Font("Ubuntu", 0, 24)); // NOI18N
+        jLabel7.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel7.setText("Log");
+
+        textOutput.setEditable(false);
+        textOutput.setFont(new java.awt.Font("Andale Mono", 0, 12)); // NOI18N
+        jScrollPane1.setViewportView(textOutput);
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -205,10 +250,16 @@ public class FrameWin extends javax.swing.JFrame {
                     .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 6, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGap(589, 589, 589))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jSeparator5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel7, javax.swing.GroupLayout.PREFERRED_SIZE, 306, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(0, 0, 0))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -216,18 +267,18 @@ public class FrameWin extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addGap(0, 24, Short.MAX_VALUE)
-                        .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 199, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(jLabel7)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 132, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(jSeparator5)
+                    .addComponent(jSeparator1, javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addComponent(jLabel1)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
         );
-
-        jLabel7.setFont(new java.awt.Font("Ubuntu", 0, 24)); // NOI18N
-        jLabel7.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel7.setText("Output");
 
         buttonStabile.setFont(new java.awt.Font("Ubuntu", 0, 18)); // NOI18N
         buttonStabile.setText("SISTEMA STABILE");
@@ -242,20 +293,145 @@ public class FrameWin extends javax.swing.JFrame {
         jLabel8.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel8.setText("Grafici");
 
+        jSeparator4.setOrientation(javax.swing.SwingConstants.VERTICAL);
+
+        textPuntoCentrale.setEditable(false);
+
+        textLimiteSuperiore.setEditable(false);
+
+        jLabel13.setText("Punto centrale:");
+
+        jLabel15.setText("Limite superiore:");
+
+        jLabel14.setText("Limite inferiore:");
+
+        textLimiteInferiore.setEditable(false);
+
+        javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
+        jPanel4.setLayout(jPanel4Layout);
+        jPanel4Layout.setHorizontalGroup(
+            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel4Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel13)
+                    .addComponent(jLabel14)
+                    .addComponent(jLabel15))
+                .addGap(13, 13, 13)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(textPuntoCentrale, javax.swing.GroupLayout.DEFAULT_SIZE, 202, Short.MAX_VALUE)
+                    .addComponent(textLimiteInferiore)
+                    .addComponent(textLimiteSuperiore))
+                .addContainerGap())
+        );
+        jPanel4Layout.setVerticalGroup(
+            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel4Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel13)
+                    .addComponent(textPuntoCentrale, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel14)
+                    .addComponent(textLimiteInferiore, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel15)
+                    .addComponent(textLimiteSuperiore, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        textGeneratoreCentri.setEditable(false);
+
+        jLabel10.setText("Tipo generatore centri:");
+
+        jLabel12.setText("Tipo coda I/O:");
+
+        textCodaCPU.setEditable(false);
+
+        jLabel11.setText("Tipo coda CPU:");
+
+        textGeneratoreArrivi.setEditable(false);
+
+        jLabel9.setText("Tipo generatore arrivi:");
+
+        textCodaIO.setEditable(false);
+
+        javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
+        jPanel5.setLayout(jPanel5Layout);
+        jPanel5Layout.setHorizontalGroup(
+            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel5Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel9)
+                    .addComponent(jLabel10)
+                    .addComponent(jLabel11)
+                    .addComponent(jLabel12))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(textGeneratoreArrivi, javax.swing.GroupLayout.DEFAULT_SIZE, 311, Short.MAX_VALUE)
+                    .addComponent(textGeneratoreCentri)
+                    .addComponent(textCodaCPU)
+                    .addComponent(textCodaIO))
+                .addContainerGap())
+        );
+        jPanel5Layout.setVerticalGroup(
+            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel5Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel9)
+                    .addComponent(textGeneratoreArrivi, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel10)
+                    .addComponent(textGeneratoreCentri, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel11)
+                    .addComponent(textCodaCPU, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel12)
+                    .addComponent(textCodaIO, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap())
+        );
+
+        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
+        jPanel3.setLayout(jPanel3Layout);
+        jPanel3Layout.setHorizontalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel3Layout.createSequentialGroup()
+                .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jSeparator4, javax.swing.GroupLayout.PREFERRED_SIZE, 6, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+        jPanel3Layout.setVerticalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jSeparator4)
+            .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(jPanel5, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+        );
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jLabel7, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(jSeparator2)
-            .addComponent(framePlot1, javax.swing.GroupLayout.DEFAULT_SIZE, 1001, Short.MAX_VALUE)
-            .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-            .addComponent(buttonStabile, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(jSeparator3)
+            .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel8, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
+                .addComponent(jLabel8, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                .addComponent(buttonStabile, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(framePlot1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -272,16 +448,45 @@ public class FrameWin extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator3, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel7)
-                .addContainerGap(231, Short.MAX_VALUE))
+                .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void textLabdaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_textLabdaActionPerformed
+    private void buttonStabileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonStabileActionPerformed
+        try {
+            semaforo.acquire();
+            setStabile();
+            buttonAvvia.setEnabled(false);
+            buttonStabile.setEnabled(false);
+            buttonStabile.setText("CALCOLO INTERVALLO DI CONFIDENZA IN CORSO");
+            semaforo.release();
+        } catch (InterruptedException ex) {
+            Logger.getLogger(FrameWin.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_buttonStabileActionPerformed
+
+    private void buttonAvvia1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonAvvia1ActionPerformed
+        convalida = true;
+        SwingWorker worker = new SwingWorker<Boolean, Void>() {
+            @Override
+            protected Boolean doInBackground() throws Exception {
+                avviaSimulazione(Integer.parseInt(textP.getText()),
+                        Double.parseDouble(textGamma.getText()),
+                        Double.parseDouble(textTs.getText()));
+                return true;
+            }
+        };
+
+        buttonAvvia.setEnabled(false);
+        buttonStabile.setEnabled(true);
+        worker.execute();
+    }//GEN-LAST:event_buttonAvvia1ActionPerformed
+
+    private void textTsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_textTsActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_textLabdaActionPerformed
+    }//GEN-LAST:event_textTsActionPerformed
 
     private void textPActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_textPActionPerformed
         // TODO add your handling code here:
@@ -289,55 +494,91 @@ public class FrameWin extends javax.swing.JFrame {
 
     private void buttonAvviaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonAvviaActionPerformed
 
+        convalida = false;
         SwingWorker worker = new SwingWorker<Boolean, Void>() {
             @Override
             protected Boolean doInBackground() throws Exception {
                 avviaSimulazione(Integer.parseInt(textP.getText()),
                         Double.parseDouble(textGamma.getText()),
-                        Double.parseDouble(textLabda.getText()));
+                        Double.parseDouble(textTs.getText()));
                 return true;
             }
         };
 
+        buttonAvvia.setEnabled(false);
+        buttonStabile.setEnabled(true);
         worker.execute();
-
     }//GEN-LAST:event_buttonAvviaActionPerformed
 
-    private void buttonStabileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonStabileActionPerformed
-        setStabile();
-    }//GEN-LAST:event_buttonStabileActionPerformed
-
     public void avviaSimulazione(int p, double gamma, double mu) {
+        statoIniziale();
+        nRun = 0;
+        nOss = 0;
+        textLimiteInferiore.setText("");
+        textLimiteSuperiore.setText("");
+        textPuntoCentrale.setText("");
+
+        textOutput.setText("");
+        testoOut = "---------------- INIZIO SIMULAZIONE ---------------- \n";
         int nMax = 10000;
         genUni = new GeneratoreUniforme();
-        genExp = new GeneratoreEsponenziale(gamma, genUni);
-        gen3Erl = new Generatore3Erlangiano(mu, new GeneratoreEsponenziale(mu, genUni));
+        if (convalida) {
+            genArrivi = new GeneratorePoissoniano(gamma, genUni);
+            genCentri = new GeneratoreEsponenziale(mu, genUni);
+        } else {
+            genArrivi = new GeneratoreEsponenziale(gamma, genUni);
+            double ts3 = mu / 3;
+            genCentri = new Generatore3Erlangiano(mu, new GeneratoreEsponenziale(ts3, genUni));
+        }
+
+        textGeneratoreArrivi.setText(genArrivi.getClass().getName());
+        textGeneratoreCentri.setText(genCentri.getClass().getName());
+        textCodaCPU.setText(cpuQueue.getClass().getName());
+        textCodaIO.setText(ioQueue.getClass().getName());
+
         en = new double[nMax];
         vc = new double[nMax];
+        fineSimulazione = false;
+        nRun = 0;
+        nOss = 0;
+        stabile = false;
+        stopSequenziatore = false;
 
         this.p = p;
         uSommaG = new double[p];
-        for (int n = 1; n <= nMax; n++) {
-            statoIniziale();
+        statiCorrenti = new StatoCorrente[p];
+        testoOut += " ---> fase stabilizzazione con " + p + " run <--- \n";
+        framePlot1.resetSerieMedia();
+        framePlot1.resetSerieVarianza();
+        for (int n = 1; n <= nMax && !fineSimulazione; n++) {
             setN0(n);
             sequenziatore();
         }
-
     }
 
     private void statoIniziale() {
-        cpuQueue = new PriorityQueue<>(new JobComparator());
+        if (convalida) {
+            cpuQueue = new CodaFIFO<>();
+            ioQueue = new CodaFIFO<>();
+        } else {
+            cpuQueue = new CodaSPTF<>(new JobComparator());
+            ioQueue = new CodaLIFO<>();
+        }
+
         calendario = new PriorityQueue<>(new EventoComparator());
-        ioQueue = new Stack<>();
         jobCorrenteCpu = null;
         jobCorrenteIO = null;
     }
 
     private void statoEquilibrio() {
-        //TODO: implementare lo stato di equilibrio
-        cpuQueue = Clona.cpuQueue(cpuQueueStabile);
+        if (convalida) {
+            cpuQueue = Clona.fifoQueue((CodaFIFO<Job>) cpuQueueStabile);
+            ioQueue = Clona.fifoQueue((CodaFIFO<Job>) ioQueueStabile);
+        } else {
+            cpuQueue = Clona.sptfQueue((CodaSPTF<Job>) cpuQueueStabile);
+            ioQueue = Clona.lifoQueue((CodaLIFO<Job>) ioQueueStabile);
+        }
         calendario = Clona.calendario(calendarioStabile);
-        ioQueue = Clona.ioQueue(ioQueueStabile);
         if (jobCorrenteCpuStabile != null) {
             jobCorrenteCpu = jobCorrenteCpuStabile.clona();
         }
@@ -350,10 +591,17 @@ public class FrameWin extends javax.swing.JFrame {
     }
 
     private void setStatoEquilibrio() {
+        testoOut += " ---> fase statistica con n0 = " + n0 + " <--- \n";
         x = new double[p];
         y = new double[p];
-        cpuQueueStabile = Clona.cpuQueue(cpuQueue);
-        ioQueueStabile = Clona.ioQueue(ioQueue);
+        if (convalida) {
+            cpuQueueStabile = Clona.fifoQueue((CodaFIFO<Job>) cpuQueue);
+            ioQueueStabile = Clona.fifoQueue((CodaFIFO<Job>) ioQueue);
+        } else {
+            cpuQueueStabile = Clona.sptfQueue((CodaSPTF<Job>) cpuQueue);
+            ioQueueStabile = Clona.lifoQueue((CodaLIFO<Job>) ioQueue);
+        }
+        System.out.println(calendario.size());
         calendarioStabile = Clona.calendario(calendario);
         if (jobCorrenteCpu != null) {
             jobCorrenteCpuStabile = jobCorrenteCpu.clona();
@@ -365,16 +613,16 @@ public class FrameWin extends javax.swing.JFrame {
 
     public void setN0(int n0) {
         this.n0 = n0;
-        stop = false;
-        System.out.println("imposto n0 = " + n0);
+        stopSequenziatore = false;
+//        System.out.println("imposto n0 = " + n0);
     }
 
     private void sequenziatore() {
-        while (!stop) {
+        while (!stopSequenziatore) {
             if (nRun == p) {
                 calendario.add(new Evento(0d, TipoEvento.FINE_SIMULAZIONE));
             }
-            calendario.add(new Evento(genExp.next(), TipoEvento.ARRIVO));
+            calendario.add(new Evento(genArrivi.next(), TipoEvento.ARRIVO));
             Evento e = calendario.poll();
             if (null != e.getTipo()) {
                 switch (e.getTipo()) {
@@ -399,17 +647,17 @@ public class FrameWin extends javax.swing.JFrame {
 
     private void arrivo() {
         Job job = new Job();
-        job.setCarico(gen3Erl.next());
+        job.setCaricoCorrente(genCentri.next());
         //System.out.println(" ARRIVO ");
         //System.out.println(job);
 
         if (jobCorrenteCpu == null) {
             jobCorrenteCpu = job;
-            calendario.add(new Evento(job.getCarico(), TipoEvento.FINE_CPU));
+            calendario.add(new Evento(job.getCaricoCorrente(), TipoEvento.FINE_CPU));
             //System.out.println("imposto jobCorrenteCpu");
         } else {
-            cpuQueue.add(job);
-            //System.out.println("metto il job in cpuQueue");
+            cpuQueue.metti(job);
+            //System.out.println("metto il job in sptfQueue");
         }
     }
 
@@ -418,58 +666,61 @@ public class FrameWin extends javax.swing.JFrame {
         if (routing <= 0.9) {
             if (jobCorrenteIO == null) {
                 jobCorrenteIO = (Job) jobCorrenteCpu.clona();
-                jobCorrenteIO.setCarico(gen3Erl.next());
-                calendario.add(new Evento(jobCorrenteIO.getCarico(), TipoEvento.FINE_IO));
+                jobCorrenteIO.setCaricoCorrente(genCentri.next());
+                calendario.add(new Evento(jobCorrenteIO.getCaricoCorrente(), TipoEvento.FINE_IO));
                 //System.out.println("imposto jobCorrenteIO da CPU");
             } else {
                 Job temp = jobCorrenteCpu.clona();
-                temp.setCarico(gen3Erl.next());
-                ioQueue.add(temp);
-                //System.out.println("metto il job in ioQueue");
+                temp.setCaricoCorrente(genCentri.next());
+                ioQueue.metti(temp);
+                //System.out.println("metto il job in lifoQueue");
             }
 
         } else if (!stabile) {
-            uSommaG[nRun++] += jobCorrenteCpu.getCarico();
+            try {
+                semaforo.acquire();
+            } catch (InterruptedException ex) {
+                Logger.getLogger(FrameWin.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            uSommaG[nRun++] += jobCorrenteCpu.getCaricoTotale();
 
             if (nRun == p) {
+                testoOut += "  Osservazioni: " + n0 + "\n";
+
                 double temp = 0;
                 for (int jj = 0; jj < p; jj++) {
                     temp += uSommaG[jj] / n0;
                 }
                 en[n0 - 1] = temp / p;
+                testoOut += "   Media campionaria e(" + n0 + "): " + df.format(en[n0 - 1]) + "\n";
 
                 double temp2 = 0;
                 for (int jj = 0; jj < p; jj++) {
                     temp2 += Math.pow(uSommaG[jj] / n0 - en[n0 - 1], 2);
                 }
                 vc[n0 - 1] = temp2 / (p - 1);
+                testoOut += "   Varianza campionaria s(" + n0 + "): " + df.format(vc[n0 - 1]) + "\n";
 
-//                System.out.println(n0 + "\t" + en[n0 - 1]);
                 framePlot1.addSerieMedia(n0 - 1, en[n0 - 1]);
                 framePlot1.addSerieVarianza(n0 - 1, vc[n0 - 1]);
 
-                if (n0 % 10 == 0) {
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException ex) {
-                        Logger.getLogger(FrameWin.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                }
                 nRun = 0;
-                stop = true;
+                stopSequenziatore = true;
             }
-
-            statoIniziale();
+            if (n0 == 1) {
+                statoIniziale();
+            }
+            semaforo.release();
 
         } else {
-            uSommaStat += jobCorrenteCpu.getCarico();
+            uSommaStat += jobCorrenteCpu.getCaricoTotale();
             nOss++;
 
             if (nOss == n0) {
                 y[nRun] = n0;
                 x[nRun] = uSommaStat;
                 nRun++;
-                stop = true;
+                stopSequenziatore = true;
                 statoEquilibrio();
             }
 
@@ -481,32 +732,32 @@ public class FrameWin extends javax.swing.JFrame {
         jobCorrenteCpu = null;
 
         if (!cpuQueue.isEmpty()) {
-            jobCorrenteCpu = cpuQueue.poll();
-            jobCorrenteCpu.setCarico(gen3Erl.next());
-            calendario.add(new Evento(jobCorrenteCpu.getCarico(), TipoEvento.FINE_CPU));
-            //System.out.println("prelevo un job da cpuQueue");
+            jobCorrenteCpu = (Job) cpuQueue.togli();
+            jobCorrenteCpu.setCaricoCorrente(genCentri.next());
+            calendario.add(new Evento(jobCorrenteCpu.getCaricoCorrente(), TipoEvento.FINE_CPU));
+            //System.out.println("prelevo un job da sptfQueue");
         }
     }
 
     private void fineIO() {
         if (jobCorrenteCpu == null) {
             jobCorrenteCpu = (Job) jobCorrenteIO.clona();
-            jobCorrenteCpu.setCarico(gen3Erl.next());
-            calendario.add(new Evento(jobCorrenteCpu.getCarico(), TipoEvento.FINE_CPU));
+            jobCorrenteCpu.setCaricoCorrente(genCentri.next());
+            calendario.add(new Evento(jobCorrenteCpu.getCaricoCorrente(), TipoEvento.FINE_CPU));
             //System.out.println("imposto jobCorrenteCpu da IO");
         } else {
             Job temp = jobCorrenteIO.clona();
-            temp.setCarico(gen3Erl.next());
-            cpuQueue.add(temp);
-            //System.out.println("metto il job in cpuQueue");
+            temp.setCaricoCorrente(genCentri.next());
+            cpuQueue.metti(temp);
+            //System.out.println("metto il job in sptfQueue");
         }
         jobCorrenteIO = null;
 
         if (!ioQueue.isEmpty()) {
-            jobCorrenteIO = ioQueue.pop();
-            jobCorrenteIO.setCarico(gen3Erl.next());
-            calendario.add(new Evento(jobCorrenteIO.getCarico(), TipoEvento.FINE_IO));
-            //System.out.println("prelevo un job da ioQueue");
+            jobCorrenteIO = (Job) ioQueue.togli();
+            jobCorrenteIO.setCaricoCorrente(genCentri.next());
+            calendario.add(new Evento(jobCorrenteIO.getCaricoCorrente(), TipoEvento.FINE_IO));
+            //System.out.println("prelevo un job da lifoQueue");
         }
     }
 
@@ -542,17 +793,18 @@ public class FrameWin extends javax.swing.JFrame {
         framePlot1.addMarker(f, Color.GREEN);
         framePlot1.addMarker(mediaInferiore, Color.RED);
         framePlot1.addMarker(mediaSuperiore, Color.RED);
-        System.out.println("inf: " + mediaInferiore);
-        System.out.println("cen: " + f);
-        System.out.println("sup: " + mediaSuperiore);
+        testoOut += "Punto centrale: " + df.format(f) + " \nIntervallo di confidenza (u1, u2): (" + df.format(mediaInferiore) + ", " + df.format(mediaSuperiore) + ")\n";
+        testoOut += "----------------  FINE SIMULAZIONE  ---------------- \n";
+        textOutput.setText(testoOut);
+        textLimiteInferiore.setText(df.format(mediaInferiore));
+        textLimiteSuperiore.setText(df.format(mediaSuperiore));
+        textPuntoCentrale.setText(df.format(f));
 
-        stop = true;
-        try {
-            Thread.sleep(10000);
-        } catch (InterruptedException ex) {
-            Logger.getLogger(FrameWin.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        System.exit(0);
+        buttonAvvia.setEnabled(true);
+        buttonStabile.setEnabled(false);
+        buttonStabile.setText("SISTEMA STABILE");
+        stopSequenziatore = true;
+        fineSimulazione = true;
     }
 
     public void setStabile() {
@@ -598,11 +850,19 @@ public class FrameWin extends javax.swing.JFrame {
         });
     }
 
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton buttonAvvia;
+    private javax.swing.JButton buttonAvvia1;
     private javax.swing.JButton buttonStabile;
     private mls.FramePlot framePlot1;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel10;
+    private javax.swing.JLabel jLabel11;
+    private javax.swing.JLabel jLabel12;
+    private javax.swing.JLabel jLabel13;
+    private javax.swing.JLabel jLabel14;
+    private javax.swing.JLabel jLabel15;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
@@ -610,13 +870,28 @@ public class FrameWin extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
+    private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
+    private javax.swing.JPanel jPanel3;
+    private javax.swing.JPanel jPanel4;
+    private javax.swing.JPanel jPanel5;
+    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSeparator jSeparator2;
     private javax.swing.JSeparator jSeparator3;
+    private javax.swing.JSeparator jSeparator4;
+    private javax.swing.JSeparator jSeparator5;
+    private javax.swing.JTextField textCodaCPU;
+    private javax.swing.JTextField textCodaIO;
     private javax.swing.JFormattedTextField textGamma;
-    private javax.swing.JFormattedTextField textLabda;
+    private javax.swing.JTextField textGeneratoreArrivi;
+    private javax.swing.JTextField textGeneratoreCentri;
+    private javax.swing.JTextField textLimiteInferiore;
+    private javax.swing.JTextField textLimiteSuperiore;
+    private javax.swing.JTextPane textOutput;
     private javax.swing.JFormattedTextField textP;
+    private javax.swing.JTextField textPuntoCentrale;
+    private javax.swing.JFormattedTextField textTs;
     // End of variables declaration//GEN-END:variables
 }

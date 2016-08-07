@@ -5,13 +5,13 @@
  */
 package mls.generatori;
 
-import java.util.ArrayList;
+import mls.util.Generatore;
 
 /**
  *
  * @author Michele Milidoni <michelemilidoni@gmail.com>
  */
-public class GeneratoreUniforme {
+public class GeneratoreUniforme implements Generatore {
 
     private final long h, m;
     private long a, xi;
@@ -29,6 +29,7 @@ public class GeneratoreUniforme {
         this.b = b;
     }
 
+    @Override
     public double next() {
         xi = (long) (a * xi) % m;
         double r = (double) xi / m;

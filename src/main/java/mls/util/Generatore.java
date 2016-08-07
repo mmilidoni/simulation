@@ -5,18 +5,11 @@
  */
 package mls.util;
 
-import java.util.Comparator;
-import mls.Job;
-
 /**
  *
  * @author Michele Milidoni <michelemilidoni@gmail.com>
  */
-public class JobComparator implements Comparator<Job> {
+public interface Generatore {
 
-    @Override
-    public int compare(Job o1, Job o2) {
-        return o1.getCaricoCorrente().compareTo(o2.getCaricoCorrente());
-    }
-
+    public double next();
 }

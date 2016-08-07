@@ -5,18 +5,16 @@
  */
 package mls.util;
 
-import java.util.Comparator;
-import mls.Job;
-
 /**
  *
  * @author Michele Milidoni <michelemilidoni@gmail.com>
+ * @param <E>
  */
-public class JobComparator implements Comparator<Job> {
+public interface Coda<E> {
 
-    @Override
-    public int compare(Job o1, Job o2) {
-        return o1.getCaricoCorrente().compareTo(o2.getCaricoCorrente());
-    }
+    public boolean metti(E a);
 
+    public Object togli();
+
+    public boolean isEmpty();
 }

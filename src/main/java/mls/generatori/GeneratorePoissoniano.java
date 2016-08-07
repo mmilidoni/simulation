@@ -11,18 +11,24 @@ import mls.util.Generatore;
  *
  * @author Michele Milidoni <michelemilidoni@gmail.com>
  */
-public class GeneratoreEsponenziale implements Generatore {
+public class GeneratorePoissoniano implements Generatore {
 
     private final double media;
     private final GeneratoreUniforme gm;
 
-    public GeneratoreEsponenziale(double media, GeneratoreUniforme gm) {
+    public GeneratorePoissoniano(double media, GeneratoreUniforme gm) {
         this.media = media;
         this.gm = gm;
     }
 
     @Override
     public double next() {
-        return (double) (-media * Math.log(gm.next()));
+        int n = 0;
+        double prod = 1;
+        while (prod > Math.exp(-media)) {
+            prod *= gm.next();
+            n++;
+        }
+        return n;
     }
 }

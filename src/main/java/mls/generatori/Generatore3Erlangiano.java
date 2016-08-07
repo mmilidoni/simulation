@@ -5,11 +5,13 @@
  */
 package mls.generatori;
 
+import mls.util.Generatore;
+
 /**
  *
  * @author Michele Milidoni <michelemilidoni@gmail.com>
  */
-public class Generatore3Erlangiano {
+public class Generatore3Erlangiano implements Generatore {
 
     private final double ts;
     private final GeneratoreEsponenziale gm;
@@ -19,8 +21,9 @@ public class Generatore3Erlangiano {
         this.gm = gm;
     }
 
+    @Override
     public double next() {
-        return -ts / 3 * Math.log(gm.next());
+        return (-ts / 3) * Math.log(gm.next() * gm.next() * gm.next());
     }
 
 }

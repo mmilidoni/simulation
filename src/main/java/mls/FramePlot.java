@@ -12,7 +12,6 @@ package mls;
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Component;
 
 import javax.swing.JPanel;
 
@@ -32,7 +31,6 @@ public class FramePlot extends JPanel {
     private final XYSeries seriesMedia;
     private final XYSeries seriesVarianza;
     private XYPlot plotMedia;
-    private ChartPanel chartPanelMedia;
 
     public FramePlot() {
 
@@ -44,9 +42,9 @@ public class FramePlot extends JPanel {
         final JFreeChart chartMedia = createChartMedia(datasetMedia);
         final JFreeChart chartVarianza = createChartVarianza(datasetVarianza);
 
-        chartPanelMedia = new ChartPanel(chartMedia);
+        ChartPanel chartPanelMedia = new ChartPanel(chartMedia);
         final ChartPanel chartPanelVarianza = new ChartPanel(chartVarianza);
-        
+
         final JPanel content = new JPanel(new BorderLayout());
         content.add(chartPanelMedia);
         content.add(chartPanelVarianza, BorderLayout.EAST);
@@ -63,13 +61,14 @@ public class FramePlot extends JPanel {
                 "en",
                 dataset,
                 PlotOrientation.VERTICAL,
-                true,
+                false,
                 true,
                 false
         );
         plotMedia = result.getXYPlot();
         ValueAxis axis = plotMedia.getDomainAxis();
         axis.setAutoRange(true);
+        axis.setFixedAutoRange(1000);
         // axis.setFixedAutoRange(60000.0);  // 60 seconds
         axis = plotMedia.getRangeAxis();
         axis.setRange(0.15, .25);
@@ -84,7 +83,7 @@ public class FramePlot extends JPanel {
                 "vc",
                 datasetVarianza,
                 PlotOrientation.VERTICAL,
-                true,
+                false,
                 true,
                 false
         );
@@ -92,6 +91,7 @@ public class FramePlot extends JPanel {
         ValueAxis axis = plot.getDomainAxis();
         axis.setAutoRange(true);
         axis = plot.getRangeAxis();
+        axis.setFixedAutoRange(1000);
         axis.setRange(0.0, .04);
         plot.getRenderer().setSeriesPaint(0, Color.MAGENTA);
         return result;
@@ -99,7 +99,6 @@ public class FramePlot extends JPanel {
 
     public void addSerieMedia(double x, double y) {
         this.seriesMedia.add(x, y);
-        chartPanelMedia.repaint();
     }
 
     public void addSerieVarianza(double x, double y) {
@@ -110,4 +109,13 @@ public class FramePlot extends JPanel {
         ValueMarker mark = new ValueMarker(val, colore, new BasicStroke(1));
         plotMedia.addRangeMarker(mark);
     }
+
+    public void resetSerieMedia() {
+        seriesMedia.clear();
+        plotMedia.clearRangeMarkers();
+    }
+    public void resetSerieVarianza() {
+        seriesVarianza.clear();
+    }
+
 }

@@ -1,6 +1,5 @@
 package mls;
 
-import java.util.GregorianCalendar;
 import java.util.Random;
 
 /*
@@ -15,28 +14,34 @@ import java.util.Random;
 public class Job {
 
     private final long id;
-    private Double carico;
+    private Double caricoTotale, caricoCorrente;
 
     public Job() {
         id = new Random().nextInt(500000);
-        carico = 0.;
+        caricoTotale = 0.;
+        caricoCorrente = 0.;
     }
 
     public Long getId() {
         return id;
     }
 
-    public Double getCarico() {
-        return carico;
+    public Double getCaricoCorrente() {
+        return caricoCorrente;
     }
 
-    public void setCarico(Double carico) {
-        this.carico = carico;
+    public Double getCaricoTotale() {
+        return caricoTotale;
+    }
+
+    public void setCaricoCorrente(Double carico) {
+        this.caricoCorrente = carico;
+        this.caricoTotale += carico;
     }
 
     public Job clona() {
         Job j = new Job();
-        j.carico = this.carico;
+        j.caricoTotale = this.caricoTotale;
         return j;
     }
 }
