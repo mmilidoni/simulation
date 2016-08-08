@@ -29,6 +29,9 @@ public class CodaFIFO<E> extends LinkedList<E> implements Coda<E> {
         return super.isEmpty();
     }
 
+    @Override
+    public int size() {
+        return super.size();
+    }
 
-    
 }

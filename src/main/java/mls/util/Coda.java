@@ -17,4 +17,6 @@ public interface Coda<E> {
     public Object togli();
 
     public boolean isEmpty();
+
+    public int size();
 }

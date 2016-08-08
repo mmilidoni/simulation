@@ -13,17 +13,11 @@ import java.util.Random;
  */
 public class Job {
 
-    private final long id;
     private Double caricoTotale, caricoCorrente;
 
     public Job() {
-        id = new Random().nextInt(500000);
         caricoTotale = 0.;
         caricoCorrente = 0.;
-    }
-
-    public Long getId() {
-        return id;
     }
 
     public Double getCaricoCorrente() {
@@ -42,6 +36,8 @@ public class Job {
     public Job clona() {
         Job j = new Job();
         j.caricoTotale = this.caricoTotale;
+        j.caricoCorrente = this.caricoCorrente;
         return j;
     }
+
 }

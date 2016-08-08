@@ -30,4 +30,9 @@ public class CodaLIFO<E> extends Stack<E> implements Coda<E> {
         return super.isEmpty();
     }
 
+    @Override
+    public int size() {
+        return super.size();
+    }
+
 }

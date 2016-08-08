@@ -14,9 +14,9 @@ import mls.util.Generatore;
 public class Generatore3Erlangiano implements Generatore {
 
     private final double ts;
-    private final GeneratoreEsponenziale gm;
+    private final GeneratoreUniforme gm;
 
-    public Generatore3Erlangiano(double ts, GeneratoreEsponenziale gm) {
+    public Generatore3Erlangiano(double ts, GeneratoreUniforme gm) {
         this.ts = ts;
         this.gm = gm;
     }

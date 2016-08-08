@@ -33,6 +33,9 @@ public class CodaSPTF<E> extends PriorityQueue implements Coda<E> {
         return super.isEmpty();
     }
 
+    @Override
+    public int size() {
+        return super.size();
+    }
 
-    
 }

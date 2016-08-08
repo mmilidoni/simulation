@@ -528,7 +528,7 @@ public class FrameWin extends javax.swing.JFrame {
         } else {
             genArrivi = new GeneratoreEsponenziale(gamma, genUni);
             double ts3 = mu / 3;
-            genCentri = new Generatore3Erlangiano(mu, new GeneratoreEsponenziale(ts3, genUni));
+            genCentri = new Generatore3Erlangiano(mu, new GeneratoreUniforme());
         }
 
         textGeneratoreArrivi.setText(genArrivi.getClass().getName());
@@ -581,9 +581,11 @@ public class FrameWin extends javax.swing.JFrame {
         calendario = Clona.calendario(calendarioStabile);
         if (jobCorrenteCpuStabile != null) {
             jobCorrenteCpu = jobCorrenteCpuStabile.clona();
+            jobCorrenteCpuStabile = null;
         }
         if (jobCorrenteIOStabile != null) {
             jobCorrenteIO = jobCorrenteIOStabile.clona();
+            jobCorrenteIOStabile = null;
         }
         uSommaStat = 0d;
         setN0(genUni.next(50, 100));
@@ -605,9 +607,11 @@ public class FrameWin extends javax.swing.JFrame {
         calendarioStabile = Clona.calendario(calendario);
         if (jobCorrenteCpu != null) {
             jobCorrenteCpuStabile = jobCorrenteCpu.clona();
+            jobCorrenteCpu = null;
         }
         if (jobCorrenteIO != null) {
             jobCorrenteIOStabile = jobCorrenteIO.clona();
+            jobCorrenteIO = null;
         }
     }
 
@@ -735,7 +739,7 @@ public class FrameWin extends javax.swing.JFrame {
             jobCorrenteCpu = (Job) cpuQueue.togli();
             jobCorrenteCpu.setCaricoCorrente(genCentri.next());
             calendario.add(new Evento(jobCorrenteCpu.getCaricoCorrente(), TipoEvento.FINE_CPU));
-            //System.out.println("prelevo un job da sptfQueue");
+            //System.out.println("prelevo un job da cpuQueue " + cpuQueue.size());
         }
     }
 
@@ -757,7 +761,7 @@ public class FrameWin extends javax.swing.JFrame {
             jobCorrenteIO = (Job) ioQueue.togli();
             jobCorrenteIO.setCaricoCorrente(genCentri.next());
             calendario.add(new Evento(jobCorrenteIO.getCaricoCorrente(), TipoEvento.FINE_IO));
-            //System.out.println("prelevo un job da lifoQueue");
+            //System.out.println("prelevo un job da ioQueue");
         }
     }
 
