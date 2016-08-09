@@ -1,7 +1,5 @@
 package mls;
 
-import java.util.Random;
-
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
@@ -13,30 +11,30 @@ import java.util.Random;
  */
 public class Job {
 
-    private Double caricoTotale, caricoCorrente;
+    private Double tempoRisposta, tempoServizio;
 
     public Job() {
-        caricoTotale = 0.;
-        caricoCorrente = 0.;
+        tempoRisposta = 0.;
+        tempoServizio = 0.;
     }
 
-    public Double getCaricoCorrente() {
-        return caricoCorrente;
+    public Double getTempoServizio() {
+        return tempoServizio;
     }
 
-    public Double getCaricoTotale() {
-        return caricoTotale;
+    public Double getTempoRisposta() {
+        return tempoRisposta;
     }
 
-    public void setCaricoCorrente(Double carico) {
-        this.caricoCorrente = carico;
-        this.caricoTotale += carico;
+    public void setTempoServizio(Double tempoServizio) {
+        this.tempoServizio = tempoServizio;
+        this.tempoRisposta += tempoServizio;
     }
 
     public Job clona() {
         Job j = new Job();
-        j.caricoTotale = this.caricoTotale;
-        j.caricoCorrente = this.caricoCorrente;
+        j.tempoRisposta = this.tempoRisposta;
+        //j.tempoServizio = this.tempoServizio;
         return j;
     }
 

@@ -5,6 +5,7 @@
  */
 package mls.util;
 
+import java.util.ConcurrentModificationException;
 import java.util.PriorityQueue;
 import mls.Evento;
 import mls.Job;
@@ -17,9 +18,13 @@ public class Clona {
 
     public static Coda<Job> sptfQueue(CodaSPTF<Job> a) {
         Coda<Job> res = new CodaSPTF<>(new JobComparator());
-        for (Object j1 : a) {
-            Job j = (Job) j1;
-            res.metti(j.clona());
+        try {
+            for (Object j1 : a) {
+                Job j = (Job) j1;
+                res.metti(j.clona());
+            }
+        } catch (ConcurrentModificationException ex) {
+            System.err.println(ex.getMessage());
         }
         return res;
     }
@@ -34,8 +39,12 @@ public class Clona {
 
     public static Coda<Job> fifoQueue(CodaFIFO<Job> a) {
         Coda<Job> res = new CodaFIFO<>();
-        for (Job j : a) {
-            res.metti(j.clona());
+        try {
+            for (Job j : a) {
+                res.metti(j.clona());
+            }
+        } catch (ConcurrentModificationException ex) {
+            System.err.println(ex.getMessage());
         }
         return res;
     }

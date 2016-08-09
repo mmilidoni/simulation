@@ -18,7 +18,7 @@ public class GeneratoreUniforme implements Generatore {
     private final int b;
 
     public GeneratoreUniforme() {
-        this(7l, 31, 77);
+        this(15l, 31, 77);
     }
 
     public GeneratoreUniforme(long xi, int b, int a) {

@@ -151,7 +151,7 @@
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="textGamma" max="32767" attributes="0"/>
+                          <Component id="textTa" max="32767" attributes="0"/>
                           <Component id="textTs" max="32767" attributes="0"/>
                           <Component id="textP" max="32767" attributes="0"/>
                           <Component id="buttonAvvia1" alignment="0" max="32767" attributes="0"/>
@@ -166,7 +166,7 @@
                       <EmptySpace type="separate" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="jLabel4" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="textGamma" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="textTa" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
@@ -188,7 +188,7 @@
             </DimensionLayout>
           </Layout>
           <SubComponents>
-            <Component class="javax.swing.JFormattedTextField" name="textGamma">
+            <Component class="javax.swing.JFormattedTextField" name="textTa">
               <Properties>
                 <Property name="text" type="java.lang.String" value="30"/>
               </Properties>
@@ -207,7 +207,7 @@
             </Component>
             <Component class="javax.swing.JLabel" name="jLabel4">
               <Properties>
-                <Property name="text" type="java.lang.String" value="Gamma"/>
+                <Property name="text" type="java.lang.String" value="Ta"/>
               </Properties>
             </Component>
             <Component class="javax.swing.JLabel" name="jLabel6">
@@ -241,7 +241,7 @@
             </Component>
             <Component class="javax.swing.JFormattedTextField" name="textTs">
               <Properties>
-                <Property name="text" type="java.lang.String" value="0.5"/>
+                <Property name="text" type="java.lang.String" value="2"/>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="textTsActionPerformed"/>

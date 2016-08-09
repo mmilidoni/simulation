@@ -13,16 +13,16 @@ import mls.util.Generatore;
  */
 public class GeneratoreEsponenziale implements Generatore {
 
-    private final double media;
+    private final double Ta;
     private final GeneratoreUniforme gm;
 
-    public GeneratoreEsponenziale(double media, GeneratoreUniforme gm) {
-        this.media = media;
+    public GeneratoreEsponenziale(double Ta, GeneratoreUniforme gm) {
+        this.Ta = Ta;
         this.gm = gm;
     }
 
     @Override
     public double next() {
-        return (double) (-media * Math.log(gm.next()));
+        return (double) (-Ta * Math.log(gm.next()));
     }
 }

@@ -13,17 +13,17 @@ import mls.util.Generatore;
  */
 public class Generatore3Erlangiano implements Generatore {
 
-    private final double ts;
-    private final GeneratoreUniforme gm;
+    private final double Ts;
+    private final Generatore gm;
 
-    public Generatore3Erlangiano(double ts, GeneratoreUniforme gm) {
-        this.ts = ts;
+    public Generatore3Erlangiano(double Ts, Generatore gm) {
+        this.Ts = Ts;
         this.gm = gm;
     }
 
     @Override
     public double next() {
-        return (-ts / 3) * Math.log(gm.next() * gm.next() * gm.next());
+        return (-Ts / 3) * Math.log(gm.next() * gm.next() * gm.next());
     }
 
 }
