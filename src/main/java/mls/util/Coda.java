@@ -5,6 +5,8 @@
  */
 package mls.util;
 
+import java.util.Collection;
+
 /**
  *
  * @author Michele Milidoni <michelemilidoni@gmail.com>
@@ -19,4 +21,6 @@ public interface Coda<E> {
     public boolean isEmpty();
 
     public int size();
+
+    public Coda clona();
 }

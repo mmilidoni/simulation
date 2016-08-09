@@ -5,6 +5,8 @@
  */
 package mls.util;
 
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.Stack;
 
 /**
@@ -35,4 +37,12 @@ public class CodaLIFO<E> extends Stack<E> implements Coda<E> {
         return super.size();
     }
 
+    @Override
+    public Coda clona() {
+        CodaLIFO cf = new CodaLIFO();
+        for (Iterator it = this.iterator(); it.hasNext();) {
+            cf.add(it.next());
+        }
+        return cf;
+    }
 }

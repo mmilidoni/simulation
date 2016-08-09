@@ -5,6 +5,7 @@
  */
 package mls.util;
 
+import java.util.Iterator;
 import java.util.LinkedList;
 
 /**
@@ -32,6 +33,15 @@ public class CodaFIFO<E> extends LinkedList<E> implements Coda<E> {
     @Override
     public int size() {
         return super.size();
+    }
+
+    @Override
+    public Coda clona() {
+        CodaFIFO cf = new CodaFIFO();
+        for (Iterator it = this.iterator(); it.hasNext();) {
+            cf.add(it.next());
+        }
+        return cf;
     }
 
 }

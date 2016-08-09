@@ -5,6 +5,7 @@
  */
 package mls.util;
 
+import java.util.Iterator;
 import java.util.PriorityQueue;
 
 /**
@@ -14,8 +15,11 @@ import java.util.PriorityQueue;
  */
 public class CodaSPTF<E> extends PriorityQueue implements Coda<E> {
 
+    private final JobComparator jobComparator;
+
     public CodaSPTF(JobComparator jobComparator) {
         super(jobComparator);
+        this.jobComparator = jobComparator;
     }
 
     @Override
@@ -38,4 +42,12 @@ public class CodaSPTF<E> extends PriorityQueue implements Coda<E> {
         return super.size();
     }
 
+    @Override
+    public Coda clona() {
+        CodaSPTF cf = new CodaSPTF(jobComparator);
+        for (Iterator it = this.iterator(); it.hasNext();) {
+            cf.add(it.next());
+        }
+        return cf;
+    }
 }
