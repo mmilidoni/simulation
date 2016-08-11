@@ -516,16 +516,16 @@ public class FrameWin extends javax.swing.JFrame {
 
         textOutput.setText("");
         testoOut = "---------------- INIZIO SIMULAZIONE ---------------- \n";
-        int nMax = 10000;
-        genUni = new GeneratoreUniforme(75l, 31, 77);
+        int nMax = 2000;
+        genUni = new GeneratoreUniforme(75l, 31, 1220703125);
         if (convalida) {
-            genArrivi = new GeneratorePoissoniano(Ta, new GeneratoreUniforme(51l, 31, 77));
-            genCentri = new GeneratoreEsponenziale(Ts, new GeneratoreUniforme(95l, 31, 77));
+            genArrivi = new GeneratorePoissoniano(Ta, new GeneratoreUniforme(51l, 31, 1220703125));
+            genCentri = new GeneratoreEsponenziale(Ts, new GeneratoreUniforme(95l, 31, 1220703125));
         } else {
-            genArrivi = new GeneratoreEsponenziale(Ta, new GeneratoreUniforme(17l, 31, 77));
+            genArrivi = new GeneratoreEsponenziale(Ta, new GeneratoreUniforme(17l, 31, 1220703125));
             double ts3 = Ts / 3;
             genCentri = new Generatore3Erlangiano(Ts,
-                    new GeneratoreEsponenziale(ts3, new GeneratoreUniforme(255l, 31, 77)));
+                    new GeneratoreEsponenziale(ts3, new GeneratoreUniforme(255l, 31, 1220703125)));
         }
 
         statoIniziale();
@@ -566,7 +566,7 @@ public class FrameWin extends javax.swing.JFrame {
         }
 
         calendario = new PriorityQueue<>(new EventoComparator());
-        calendario.add(new Evento(genArrivi.next(), TipoEvento.ARRIVO));
+        //calendario.add(new Evento(genArrivi.next(), TipoEvento.ARRIVO));
 
         jobCorrenteCpu = null;
         jobCorrenteIO = null;
@@ -639,7 +639,9 @@ public class FrameWin extends javax.swing.JFrame {
             } catch (InterruptedException ex) {
                 Logger.getLogger(FrameWin.class.getName()).log(Level.SEVERE, null, ex);
             }
+            System.out.print("Aggiungo a uSommaG: " + jobCorrenteCpu.getTempoRisposta());
             uSommaG[nRun++] += jobCorrenteCpu.getTempoRisposta();
+            System.out.println("\tRun" + (nRun - 1) + "):\t" + uSommaG[(nRun - 1)]);
 
             if (nRun == pRun) {
                 testoOut += "  Osservazioni: " + n0 + "\n";
@@ -665,7 +667,7 @@ public class FrameWin extends javax.swing.JFrame {
                 stopSequenziatore = true;
             }
             if (n0 == 1) {
-                statoIniziale();
+                //statoIniziale();
             }
             //setStatoCorrente();
             semaforo.release();
@@ -698,13 +700,21 @@ public class FrameWin extends javax.swing.JFrame {
     }
 
     private void setStatoCorrente() {
-        StatoCorrente sc = new StatoCorrente();
-        sc.setCalendario(new PriorityQueue<>(calendario));
-        sc.setCpuQueue(cpuQueue.clona());
-        sc.setIoQueue(ioQueue.clona());
-        sc.setJobCorrenteCpu(jobCorrenteCpu.clona());
-        sc.setJobCorrenteIO(jobCorrenteIO.clona());
-        statiCorrenti[nRun - 1] = sc;
+        if (nRun > 0) {
+            StatoCorrente sc = new StatoCorrente();
+            sc.setCalendario(new PriorityQueue<>(calendario));
+            sc.setCpuQueue(cpuQueue.clona());
+            sc.setIoQueue(ioQueue.clona());
+
+            if (jobCorrenteCpu != null) {
+                sc.setJobCorrenteCpu(jobCorrenteCpu.clona());
+            }
+            if (jobCorrenteIO != null) {
+                sc.setJobCorrenteIO(jobCorrenteIO.clona());
+            }
+
+            statiCorrenti[nRun - 1] = sc;
+        }
     }
 
     private void getStatoCorrente() {
