@@ -20,7 +20,6 @@ import mls.util.Coda;
 import mls.util.CodaFIFO;
 import mls.util.CodaLIFO;
 import mls.util.CodaSPTF;
-import mls.util.EventoComparator;
 import mls.util.Generatore;
 import mls.util.JobComparator;
 import mls.util.StatoCorrente;
@@ -32,7 +31,8 @@ import mls.util.TipoEvento;
  */
 public class FrameWin extends javax.swing.JFrame {
 
-    private PriorityQueue<Evento> calendario;
+    //private PriorityQueue<Evento> calendario;
+    private Calendario cal;
     private Coda<Job> cpuQueue;
     private Coda<Job> ioQueue;
 
@@ -55,7 +55,7 @@ public class FrameWin extends javax.swing.JFrame {
 
     private Coda<Job> cpuQueueStabile;
     private Coda<Job> ioQueueStabile;
-    private PriorityQueue<Evento> calendarioStabile;
+    private Calendario calendarioStabile;
     private Job jobCorrenteCpuStabile;
     private Job jobCorrenteIOStabile;
 
@@ -549,7 +549,7 @@ public class FrameWin extends javax.swing.JFrame {
         testoOut += " ---> fase stabilizzazione con " + pRun + " run <--- \n";
         framePlot1.resetSerieMedia();
         framePlot1.resetSerieVarianza();
-        calendario.add(new Evento(genArrivi.next(), TipoEvento.ARRIVO));
+        //cal.setArrivo(new Evento(cal.getClock() + genArrivi.next(), TipoEvento.ARRIVO));
         for (int n = 1; n <= nMax && !fineSimulazione; n++) {
             setN0(n);
             sequenziatore();
@@ -565,9 +565,10 @@ public class FrameWin extends javax.swing.JFrame {
             ioQueue = new CodaLIFO<>();
         }
 
-        calendario = new PriorityQueue<>(new EventoComparator());
+        //calendario = new PriorityQueue<>(new EventoComparator());
+        cal = new Calendario();
+        cal.setArrivo(new Evento(cal.getClock() + genArrivi.next(), TipoEvento.ARRIVO));
         //calendario.add(new Evento(genArrivi.next(), TipoEvento.ARRIVO));
-
         jobCorrenteCpu = null;
         jobCorrenteIO = null;
     }
@@ -575,9 +576,9 @@ public class FrameWin extends javax.swing.JFrame {
     private void sequenziatore() {
         while (!stopSequenziatore) {
             if (nRun == pRun) {
-                calendario.add(new Evento(0d, TipoEvento.FINE_SIMULAZIONE));
+                cal.setSimulazione(new Evento(cal.getClock(), TipoEvento.FINE_SIMULAZIONE));
             }
-            Evento e = calendario.poll();
+            Evento e = cal.next();
             if (null != e.getTipo()) {
                 switch (e.getTipo()) {
                     case ARRIVO:
@@ -600,16 +601,17 @@ public class FrameWin extends javax.swing.JFrame {
     }
 
     private void arrivo() {
-        calendario.add(new Evento(genArrivi.next(), TipoEvento.ARRIVO));
+        cal.setArrivo(new Evento(cal.getClock() + genArrivi.next(), TipoEvento.ARRIVO));
 
         Job job = new Job();
-        job.setTempoServizio(genCentri.next());
+        job.setTempoProcessamento(cal.getClock() + genCentri.next());
+        job.setTempoArrivo(cal.getClock());
         //System.out.println(" ARRIVO ");
         //System.out.println(job);
 
         if (jobCorrenteCpu == null) {
             jobCorrenteCpu = job;
-            calendario.add(new Evento(job.getTempoServizio(), TipoEvento.FINE_CPU));
+            cal.setCpu(new Evento(cal.getClock() + job.getTempoProcessamento(), TipoEvento.FINE_CPU));
             //System.out.println("imposto jobCorrenteCpu");
         } else {
             cpuQueue.metti(job);
@@ -620,28 +622,31 @@ public class FrameWin extends javax.swing.JFrame {
     private void fineCPU() {
         double routing = genUni.next();
         if (routing <= 0.9) {
+            Job temp = jobCorrenteCpu.clona();
+            temp.setTempoProcessamento(genCentri.next());
+            jobCorrenteCpu = null;
             if (jobCorrenteIO == null) {
-                jobCorrenteIO = (Job) jobCorrenteCpu.clona();
-                jobCorrenteIO.setTempoServizio(genCentri.next());
-                calendario.add(new Evento(jobCorrenteIO.getTempoServizio(), TipoEvento.FINE_IO));
+                jobCorrenteIO = temp;
+                cal.setIo(new Evento(cal.getClock() + jobCorrenteIO.getTempoProcessamento(), TipoEvento.FINE_IO));
                 //System.out.println("imposto jobCorrenteIO da CPU");
             } else {
-                Job temp = jobCorrenteCpu.clona();
-                temp.setTempoServizio(genCentri.next());
                 ioQueue.metti(temp);
                 //System.out.println("metto il job in lifoQueue");
             }
 
         } else if (!stabile) {
-            //getStatoCorrente();
+            jobCorrenteCpu.setTempoUscita(cal.getClock());
+            getStatoCorrente();
             try {
                 semaforo.acquire();
             } catch (InterruptedException ex) {
                 Logger.getLogger(FrameWin.class.getName()).log(Level.SEVERE, null, ex);
             }
-            System.out.print("Aggiungo a uSommaG: " + jobCorrenteCpu.getTempoRisposta());
+            //System.out.print("Aggiungo a uSommaG: " + jobCorrenteCpu.getTempoRisposta());
             uSommaG[nRun++] += jobCorrenteCpu.getTempoRisposta();
-            System.out.println("\tRun" + (nRun - 1) + "):\t" + uSommaG[(nRun - 1)]);
+            System.out.println("TR: " + jobCorrenteCpu.getTempoRisposta());
+            //System.out.println("\tRun" + (nRun - 1) + "):\t" + uSommaG[(nRun - 1)]);
+            jobCorrenteCpu = null;
 
             if (nRun == pRun) {
                 testoOut += "  Osservazioni: " + n0 + "\n";
@@ -652,6 +657,7 @@ public class FrameWin extends javax.swing.JFrame {
                 }
                 en[n0 - 1] = temp / pRun;
                 testoOut += "   Media campionaria e(" + n0 + "): " + df.format(en[n0 - 1]) + "\n";
+                System.out.println("   Media campionaria e(" + n0 + "): " + df.format(en[n0 - 1]) + "\n");
 
                 double temp2 = 0;
                 for (int jj = 0; jj < pRun; jj++) {
@@ -667,9 +673,9 @@ public class FrameWin extends javax.swing.JFrame {
                 stopSequenziatore = true;
             }
             if (n0 == 1) {
-                //statoIniziale();
+                statoIniziale();
             }
-            //setStatoCorrente();
+            setStatoCorrente();
             semaforo.release();
 
         } else {
@@ -685,7 +691,7 @@ public class FrameWin extends javax.swing.JFrame {
             }
 
             if (nRun == pRun) {
-                calendario.add(new Evento(0d, TipoEvento.FINE_SIMULAZIONE));
+                cal.setSimulazione(new Evento(cal.getClock(), TipoEvento.FINE_SIMULAZIONE));
             }
         }
 
@@ -693,26 +699,51 @@ public class FrameWin extends javax.swing.JFrame {
 
         if (!cpuQueue.isEmpty()) {
             jobCorrenteCpu = (Job) cpuQueue.togli();
-            jobCorrenteCpu.setTempoServizio(genCentri.next());
-            calendario.add(new Evento(jobCorrenteCpu.getTempoServizio(), TipoEvento.FINE_CPU));
+            jobCorrenteCpu.setTempoProcessamento(genCentri.next());
+            cal.setCpu(new Evento(cal.getClock() + jobCorrenteCpu.getTempoProcessamento(), TipoEvento.FINE_CPU));
             //System.out.println("prelevo un job da cpuQueue " + cpuQueue.size());
+        } else {
+            cal.setCpu(new Evento(Double.MAX_VALUE, TipoEvento.FINE_CPU));
+        }
+    }
+
+    private void fineIO() {
+        Job temp = jobCorrenteIO.clona();
+        temp.setTempoProcessamento(genCentri.next());
+        jobCorrenteIO = null;
+        if (jobCorrenteCpu == null) {
+            jobCorrenteCpu = temp;
+            cal.setCpu(new Evento(cal.getClock() + jobCorrenteCpu.getTempoProcessamento(), TipoEvento.FINE_CPU));
+            //System.out.println("imposto jobCorrenteCpu da IO");
+        } else {
+            cpuQueue.metti(temp);
+            //System.out.println("metto il job in sptfQueue");
+        }
+
+        if (!ioQueue.isEmpty()) {
+            jobCorrenteIO = (Job) ioQueue.togli();
+            jobCorrenteIO.setTempoProcessamento(genCentri.next());
+            cal.setIo(new Evento(cal.getClock() + jobCorrenteIO.getTempoProcessamento(), TipoEvento.FINE_IO));
+            //System.out.println("prelevo un job da ioQueue");
+        } else {
+            cal.setIo(new Evento(Double.MAX_VALUE, TipoEvento.FINE_IO));
         }
     }
 
     private void setStatoCorrente() {
         if (nRun > 0) {
             StatoCorrente sc = new StatoCorrente();
-            sc.setCalendario(new PriorityQueue<>(calendario));
+            sc.setCalendario(cal.clona());
             sc.setCpuQueue(cpuQueue.clona());
             sc.setIoQueue(ioQueue.clona());
-
+/*
             if (jobCorrenteCpu != null) {
                 sc.setJobCorrenteCpu(jobCorrenteCpu.clona());
             }
             if (jobCorrenteIO != null) {
                 sc.setJobCorrenteIO(jobCorrenteIO.clona());
             }
-
+*/
             statiCorrenti[nRun - 1] = sc;
         }
     }
@@ -720,33 +751,11 @@ public class FrameWin extends javax.swing.JFrame {
     private void getStatoCorrente() {
         if (nRun > 0) {
             StatoCorrente sc = statiCorrenti[nRun - 1];
-            calendario = sc.getCalendario();
+            cal = sc.getCalendario().clona();
             cpuQueue = sc.getCpuQueue();
             ioQueue = sc.getIoQueue();
-            jobCorrenteCpu = sc.getJobCorrenteCpu();
-            jobCorrenteIO = sc.getJobCorrenteIO();
-        }
-    }
-
-    private void fineIO() {
-        if (jobCorrenteCpu == null) {
-            jobCorrenteCpu = (Job) jobCorrenteIO.clona();
-            jobCorrenteCpu.setTempoServizio(genCentri.next());
-            calendario.add(new Evento(jobCorrenteCpu.getTempoServizio(), TipoEvento.FINE_CPU));
-            //System.out.println("imposto jobCorrenteCpu da IO");
-        } else {
-            Job temp = jobCorrenteIO.clona();
-            temp.setTempoServizio(genCentri.next());
-            cpuQueue.metti(temp);
-            //System.out.println("metto il job in sptfQueue");
-        }
-        jobCorrenteIO = null;
-
-        if (!ioQueue.isEmpty()) {
-            jobCorrenteIO = (Job) ioQueue.togli();
-            jobCorrenteIO.setTempoServizio(genCentri.next());
-            calendario.add(new Evento(jobCorrenteIO.getTempoServizio(), TipoEvento.FINE_IO));
-            //System.out.println("prelevo un job da ioQueue");
+          //  jobCorrenteCpu = sc.getJobCorrenteCpu();
+          //  jobCorrenteIO = sc.getJobCorrenteIO();
         }
     }
 
@@ -815,7 +824,7 @@ public class FrameWin extends javax.swing.JFrame {
 //            cpuQueue = Clona.sptfQueue((CodaSPTF<Job>) cpuQueueStabile);
 //            ioQueue = Clona.lifoQueue((CodaLIFO<Job>) ioQueueStabile);
         }
-        calendario = new PriorityQueue<>(calendarioStabile);
+        cal = calendarioStabile.clona();
 //        calendario = Clona.calendario(calendarioStabile);
         if (jobCorrenteCpuStabile != null) {
             jobCorrenteCpu = jobCorrenteCpuStabile.clona();
@@ -845,9 +854,8 @@ public class FrameWin extends javax.swing.JFrame {
 //            cpuQueueStabile = Clona.sptfQueue((CodaSPTF<Job>) cpuQueue);
 //            ioQueueStabile = Clona.lifoQueue((CodaLIFO<Job>) ioQueue);
         }
-        System.out.println(calendario.size());
-        calendarioStabile = new PriorityQueue<>(calendario);
-//        calendarioStabile = Clona.calendario(calendario);
+
+        calendarioStabile = cal.clona();
         if (jobCorrenteCpu != null) {
             jobCorrenteCpuStabile = jobCorrenteCpu.clona();
             jobCorrenteCpu = null;

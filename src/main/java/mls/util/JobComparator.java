@@ -16,7 +16,7 @@ public class JobComparator implements Comparator<Job> {
 
     @Override
     public int compare(Job o1, Job o2) {
-        return o1.getTempoServizio().compareTo(o2.getTempoServizio());
+        return o1.getTempoProcessamento().compareTo(o2.getTempoProcessamento());
     }
 
 }

@@ -20,12 +20,14 @@ public class Calendario {
     private Evento cpu;
     private Evento io;
     private Evento simulazione;
+    private double clock;
 
     public Calendario() {
         arrivo = new Evento(Double.MAX_VALUE, ARRIVO);
         cpu = new Evento(Double.MAX_VALUE, FINE_CPU);
         io = new Evento(Double.MAX_VALUE, FINE_IO);
         simulazione = new Evento(Double.MAX_VALUE, FINE_SIMULAZIONE);
+        clock = 0d;
     }
 
     public Evento next() {
@@ -49,7 +51,17 @@ public class Calendario {
             out = simulazione;
         }
 
+        clock = min;
+        // System.out.println("Processo " + out.getTipo() + " al clock " + clock);
         return out;
+    }
+
+    public double getClock() {
+        return clock;
+    }
+
+    public void setClock(double clock) {
+        this.clock = clock;
     }
 
     public Evento getArrivo() {
@@ -83,7 +95,16 @@ public class Calendario {
     public void setSimulazione(Evento simulazione) {
         this.simulazione = simulazione;
     }
-    
-    
+
+    public Calendario clona() {
+        Calendario c = new Calendario();
+        c.setArrivo(arrivo.clona());
+        c.setCpu(cpu.clona());
+        c.setIo(io.clona());
+        c.setSimulazione(simulazione.clona());
+        c.setClock(clock);
+        
+        return c;
+    }
 
 }

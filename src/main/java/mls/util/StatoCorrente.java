@@ -6,6 +6,7 @@
 package mls.util;
 
 import java.util.PriorityQueue;
+import mls.Calendario;
 import mls.Evento;
 import mls.Job;
 
@@ -16,7 +17,7 @@ import mls.Job;
 public class StatoCorrente {
 
     private Coda cpuQueue, ioQueue;
-    private PriorityQueue<Evento> calendario;
+    private Calendario calendario;
     Job jobCorrenteCpu, jobCorrenteIO;
 
     public Coda getCpuQueue() {
@@ -35,11 +36,11 @@ public class StatoCorrente {
         this.ioQueue = ioQueue;
     }
 
-    public PriorityQueue<Evento> getCalendario() {
+    public Calendario getCalendario() {
         return calendario;
     }
 
-    public void setCalendario(PriorityQueue<Evento> calendario) {
+    public void setCalendario(Calendario calendario) {
         this.calendario = calendario;
     }
 
