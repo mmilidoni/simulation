@@ -103,7 +103,7 @@ public class Calendario {
         c.setIo(io.clona());
         c.setSimulazione(simulazione.clona());
         c.setClock(clock);
-        
+
         return c;
     }
 

@@ -519,7 +519,7 @@ public class FrameWin extends javax.swing.JFrame {
         int nMax = 2000;
         genUni = new GeneratoreUniforme(75l, 31, 1220703125);
         if (convalida) {
-            genArrivi = new GeneratorePoissoniano(Ta, new GeneratoreUniforme(51l, 31, 1220703125));
+            genArrivi = new GeneratorePoissoniano(Ta, new GeneratoreUniforme(17l, 31, 1220703125));
             genCentri = new GeneratoreEsponenziale(Ts, new GeneratoreUniforme(95l, 31, 1220703125));
         } else {
             genArrivi = new GeneratoreEsponenziale(Ta, new GeneratoreUniforme(17l, 31, 1220703125));
@@ -565,10 +565,8 @@ public class FrameWin extends javax.swing.JFrame {
             ioQueue = new CodaLIFO<>();
         }
 
-        //calendario = new PriorityQueue<>(new EventoComparator());
         cal = new Calendario();
         cal.setArrivo(new Evento(cal.getClock() + genArrivi.next(), TipoEvento.ARRIVO));
-        //calendario.add(new Evento(genArrivi.next(), TipoEvento.ARRIVO));
         jobCorrenteCpu = null;
         jobCorrenteIO = null;
     }
@@ -604,7 +602,7 @@ public class FrameWin extends javax.swing.JFrame {
         cal.setArrivo(new Evento(cal.getClock() + genArrivi.next(), TipoEvento.ARRIVO));
 
         Job job = new Job();
-        job.setTempoProcessamento(cal.getClock() + genCentri.next());
+        job.setTempoProcessamento(genCentri.next());
         job.setTempoArrivo(cal.getClock());
         //System.out.println(" ARRIVO ");
         //System.out.println(job);
@@ -636,7 +634,7 @@ public class FrameWin extends javax.swing.JFrame {
 
         } else if (!stabile) {
             jobCorrenteCpu.setTempoUscita(cal.getClock());
-            getStatoCorrente();
+            //getStatoCorrente();
             try {
                 semaforo.acquire();
             } catch (InterruptedException ex) {
@@ -675,7 +673,7 @@ public class FrameWin extends javax.swing.JFrame {
             if (n0 == 1) {
                 statoIniziale();
             }
-            setStatoCorrente();
+            //setStatoCorrente();
             semaforo.release();
 
         } else {
@@ -736,14 +734,14 @@ public class FrameWin extends javax.swing.JFrame {
             sc.setCalendario(cal.clona());
             sc.setCpuQueue(cpuQueue.clona());
             sc.setIoQueue(ioQueue.clona());
-/*
+            /*
             if (jobCorrenteCpu != null) {
                 sc.setJobCorrenteCpu(jobCorrenteCpu.clona());
             }
             if (jobCorrenteIO != null) {
                 sc.setJobCorrenteIO(jobCorrenteIO.clona());
             }
-*/
+             */
             statiCorrenti[nRun - 1] = sc;
         }
     }
@@ -754,8 +752,8 @@ public class FrameWin extends javax.swing.JFrame {
             cal = sc.getCalendario().clona();
             cpuQueue = sc.getCpuQueue();
             ioQueue = sc.getIoQueue();
-          //  jobCorrenteCpu = sc.getJobCorrenteCpu();
-          //  jobCorrenteIO = sc.getJobCorrenteIO();
+            //  jobCorrenteCpu = sc.getJobCorrenteCpu();
+            //  jobCorrenteIO = sc.getJobCorrenteIO();
         }
     }
 
