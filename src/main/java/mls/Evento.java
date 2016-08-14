@@ -13,16 +13,16 @@ import mls.util.TipoEvento;
  */
 public class Evento {
 
-    private final Double orario;
+    private final Double durata;
     private final TipoEvento tipo;
 
     public Evento(Double orario, TipoEvento tipo) {
-        this.orario = orario;
+        this.durata = orario;
         this.tipo = tipo;
     }
 
-    public Double getOrario() {
-        return orario;
+    public Double getDurata() {
+        return durata;
     }
 
     public TipoEvento getTipo() {
@@ -30,7 +30,7 @@ public class Evento {
     }
 
     public Evento clona() {
-        return new Evento(orario, tipo);
+        return new Evento(durata, tipo);
     }
 
 }

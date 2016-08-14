@@ -7,6 +7,7 @@ package mls;
 
 import static mls.util.TipoEvento.ARRIVO;
 import static mls.util.TipoEvento.FINE_CPU;
+import static mls.util.TipoEvento.FINE_CPU2;
 import static mls.util.TipoEvento.FINE_IO;
 import static mls.util.TipoEvento.FINE_SIMULAZIONE;
 
@@ -18,6 +19,7 @@ public class Calendario {
 
     private Evento arrivo;
     private Evento cpu;
+    private Evento cpu2;
     private Evento io;
     private Evento simulazione;
     private double clock;
@@ -25,6 +27,7 @@ public class Calendario {
     public Calendario() {
         arrivo = new Evento(Double.MAX_VALUE, ARRIVO);
         cpu = new Evento(Double.MAX_VALUE, FINE_CPU);
+        cpu2 = new Evento(Double.MAX_VALUE, FINE_CPU2);
         io = new Evento(Double.MAX_VALUE, FINE_IO);
         simulazione = new Evento(Double.MAX_VALUE, FINE_SIMULAZIONE);
         clock = 0d;
@@ -34,20 +37,24 @@ public class Calendario {
         Evento out = null;
         double min = Double.MAX_VALUE;
 
-        if (arrivo.getOrario() < min) {
-            min = arrivo.getOrario();
+        if (arrivo.getDurata() < min) {
+            min = arrivo.getDurata();
             out = arrivo;
         }
-        if (cpu.getOrario() < min) {
-            min = cpu.getOrario();
+        if (cpu.getDurata() < min) {
+            min = cpu.getDurata();
             out = cpu;
         }
-        if (io.getOrario() < min) {
-            min = io.getOrario();
+        if (cpu2.getDurata() < min) {
+            min = cpu2.getDurata();
+            out = cpu2;
+        }
+        if (io.getDurata() < min) {
+            min = io.getDurata();
             out = io;
         }
-        if (simulazione.getOrario() < min) {
-            min = simulazione.getOrario();
+        if (simulazione.getDurata() < min) {
+            min = simulazione.getDurata();
             out = simulazione;
         }
 
@@ -59,6 +66,9 @@ public class Calendario {
             case FINE_CPU:
                 setCpu(new Evento(Double.MAX_VALUE, FINE_CPU));
                 break;
+            case FINE_CPU2:
+                setCpu2(new Evento(Double.MAX_VALUE, FINE_CPU2));
+                break;
             case FINE_IO:
                 setIo(new Evento(Double.MAX_VALUE, FINE_IO));
                 break;
@@ -69,7 +79,7 @@ public class Calendario {
                 throw new AssertionError(out.getTipo().name());
         }
 
-        // System.out.println("Processo " + out.getTipo() + " al clock " + clock);
+//        System.out.println("Processo " + out.getTipo() + " al clock " + clock);
         return out;
     }
 
@@ -97,6 +107,14 @@ public class Calendario {
         this.cpu = cpu;
     }
 
+    public Evento getCpu2() {
+        return cpu2;
+    }
+
+    public void setCpu2(Evento cpu2) {
+        this.cpu2 = cpu2;
+    }
+
     public Evento getIo() {
         return io;
     }
@@ -117,6 +135,7 @@ public class Calendario {
         Calendario c = new Calendario();
         c.setArrivo(arrivo.clona());
         c.setCpu(cpu.clona());
+        c.setCpu2(cpu2.clona());
         c.setIo(io.clona());
         c.setSimulazione(simulazione.clona());
         c.setClock(clock);

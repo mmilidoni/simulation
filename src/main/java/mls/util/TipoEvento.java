@@ -12,6 +12,7 @@ package mls.util;
 public enum TipoEvento {
     ARRIVO,
     FINE_CPU,
+    FINE_CPU2,
     FINE_IO,
     FINE_SIMULAZIONE
 }

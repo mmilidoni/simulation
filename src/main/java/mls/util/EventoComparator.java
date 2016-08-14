@@ -16,7 +16,7 @@ public class EventoComparator implements Comparator<Evento> {
 
     @Override
     public int compare(Evento o1, Evento o2) {
-        return o1.getOrario().compareTo(o2.getOrario());
+        return o1.getDurata().compareTo(o2.getDurata());
     }
 
 }
