@@ -41,8 +41,8 @@ public class FrameWin extends javax.swing.JFrame {
     private Job jobCorrenteCpu;
     private Job jobCorrenteIO;
     private int pRun;
-    private final int passo = 5;
-    private int n0, nRun = 0, nOss = 0;
+    private final int passo = 10;
+    private int nOsservazioni, nRun = 0, nOsservazioniEffettuate = 0, n0 = 0;
     private double uSommaG[];
     private double en[];
     private double vc[];
@@ -512,19 +512,19 @@ public class FrameWin extends javax.swing.JFrame {
     private final double semeCentroCpu = 233;
     private final double semeCentroIo = 283;
     private final double semeRouting = 227;
+
     private double semeArriviStabile = 229;
-    private double semeCentriStabile = 233;
+    private double semeCentroCpuStabile = 233;
+    private double semeCentroIoStabile = 283;
     private double semeRoutingStabile = 227;
 
     public void avviaSimulazione(int pRun, double Ta, double Ts) {
-        double gamma = 1 / Ta;
-        double mu = 1 / Ts;
         textLimiteInferiore.setText("");
         textLimiteSuperiore.setText("");
         textPuntoCentrale.setText("");
 
         textOutput.setText("");
-        testoOut = "---------------- INIZIO SIMULAZIONE ---------------- \n";
+        testoOut = "-> INIZIO SIMULAZIONE <-\n";
         int nMax = 2000;
         genRouting = new GeneratoreUniforme(semeRouting);
         if (convalida) {
@@ -548,20 +548,20 @@ public class FrameWin extends javax.swing.JFrame {
         vc = new double[nMax];
         fineSimulazione = false;
         nRun = 0;
-        nOss = 0;
+        nOsservazioniEffettuate = 0;
         stabile = false;
         stopSequenziatore = false;
 
         this.pRun = pRun;
         uSommaG = new double[pRun];
-        testoOut += " ---> fase stabilizzazione con " + pRun + " run <--- \n";
+        testoOut += "-> stabilizzazione run: " + pRun + " <- \n";
         framePlot1.resetSerieMedia();
         framePlot1.resetSerieVarianza();
-        //cal.setArrivo(new Evento(cal.getClock() + genArrivi.next(), TipoEvento.ARRIVO));
-        for (int n = passo; n <= nMax && !fineSimulazione; n += passo) {
-            setN0(n);
+        for (int n = passo; n <= nMax && !fineSimulazione && !stabile; n += passo) {
+            setnOsservazioni(n);
             sequenziatore();
         }
+        System.out.println("ciao");
     }
 
     private void statoIniziale() {
@@ -582,7 +582,7 @@ public class FrameWin extends javax.swing.JFrame {
         cal.setArrivo(new Evento(cal.getClock() + genArrivi.next(), TipoEvento.ARRIVO));
         jobCorrenteCpu = null;
         jobCorrenteIO = null;
-        nOss = 0;
+        nOsservazioniEffettuate = 0;
     }
 
     private void sequenziatore() {
@@ -642,40 +642,36 @@ public class FrameWin extends javax.swing.JFrame {
         } else {
             jobCorrenteCpu.setTempoUscita(cal.getClock());
             if (!stabile) {
-                //getStatoCorrente();
                 try {
                     semaforo.acquire();
                 } catch (InterruptedException ex) {
                     Logger.getLogger(FrameWin.class.getName()).log(Level.SEVERE, null, ex);
                 }
-                //System.out.print("Aggiungo a uSommaG: " + jobCorrenteCpu.getTempoRisposta());
                 uSommaG[nRun++] += jobCorrenteCpu.getTempoRisposta();
-                //System.out.println("TR: " + jobCorrenteCpu.getTempoRisposta());
-                //System.out.println("\tRun" + (nRun - 1) + "):\t" + uSommaG[(nRun - 1)]);
                 jobCorrenteCpu = null;
 
                 if (nRun == pRun) {
-                    nOss++;
-                    if (nOss == n0) {
-                        testoOut += "  Osservazioni: " + n0 + "\n";
+                    nOsservazioniEffettuate++;
+                    if (nOsservazioniEffettuate == nOsservazioni) {
+                        testoOut += "  Osservazioni: " + nOsservazioni + "\n";
 
                         double temp = 0;
                         for (int jj = 0; jj < pRun; jj++) {
-                            temp += uSommaG[jj] / n0;
+                            temp += uSommaG[jj] / nOsservazioni;
                         }
-                        en[n0 - 1] = temp / pRun;
-                        testoOut += "   Media campionaria e(" + n0 + "): " + df.format(en[n0 - 1]) + "\n";
-//                System.out.println("   Media campionaria e(" + n0 + "): " + df.format(en[n0 - 1]) + "\n");
+                        en[nOsservazioni - 1] = temp / pRun;
+                        testoOut += "   E(" + nOsservazioni + "): " + df.format(en[nOsservazioni - 1]) + "\n";
+//                System.out.println("   Media campionaria e(" + nOsservazioni + "): " + df.format(en[nOsservazioni - 1]) + "\n");
 
                         double temp2 = 0;
                         for (int jj = 0; jj < pRun; jj++) {
-                            temp2 += Math.pow(uSommaG[jj] / n0 - en[n0 - 1], 2);
+                            temp2 += Math.pow(uSommaG[jj] / nOsservazioni - en[nOsservazioni - 1], 2);
                         }
-                        vc[n0 - 1] = temp2 / (pRun - 1);
-                        testoOut += "   Varianza campionaria s(" + n0 + "): " + df.format(vc[n0 - 1]) + "\n";
+                        vc[nOsservazioni - 1] = temp2 / (pRun - 1);
+                        testoOut += "   s^2(" + nOsservazioni + "): " + df.format(vc[nOsservazioni - 1]) + "\n";
 
-                        framePlot1.addSerieMedia(n0 - 1, en[n0 - 1]);
-                        framePlot1.addSerieVarianza(n0 - 1, vc[n0 - 1]);
+                        framePlot1.addSerieMedia(nOsservazioni - 1, en[nOsservazioni - 1]);
+                        framePlot1.addSerieVarianza(nOsservazioni - 1, vc[nOsservazioni - 1]);
 
                         nRun = 0;
 
@@ -687,25 +683,87 @@ public class FrameWin extends javax.swing.JFrame {
                         nRun = 0;
                     }
                 }
-                //setStatoCorrente();
                 semaforo.release();
-
             } else {
-                uSommaStat += jobCorrenteCpu.getTempoRisposta();
-                nOss++;
+                nOsservazioniEffettuate++;
+                int ennezero = 1500;
+                if ((nOsservazioniEffettuate - ennezero) > 0) {
+                    uSommaStat += jobCorrenteCpu.getTempoRisposta();
 
-                if ((nOss - 1) == n0) {
-                    y[nRun - 1] = n0;
-                    x[nRun - 1] = uSommaStat;
-                    stopSequenziatore = true;
-                    nRun++;
-                    statoEquilibrio();
-                }
+                    if ((nOsservazioniEffettuate - ennezero) == nOsservazioni) {
+                        y[nRun - 1] = nOsservazioni;
+                        x[nRun - 1] = uSommaStat;
+                        stopSequenziatore = true;
+                        nRun++;
+                        statoEquilibrio();
+                    }
 
-                if ((nRun - 1) == pRun) {
-                    cal.setSimulazione(new Evento(cal.getClock(), TipoEvento.FINE_SIMULAZIONE));
+                    if ((nRun - 1) == pRun) {
+                        cal.setSimulazione(new Evento(cal.getClock(), TipoEvento.FINE_SIMULAZIONE));
+                    }
                 }
             }
+
+//            jobCorrenteCpu.setTempoUscita(cal.getClock());
+//            if (!stabile) {
+//                try {
+//                    semaforo.acquire();
+//                } catch (InterruptedException ex) {
+//                    Logger.getLogger(FrameWin.class.getName()).log(Level.SEVERE, null, ex);
+//                }
+//                uSommaG[nRun++] += jobCorrenteCpu.getTempoRisposta();
+//                jobCorrenteCpu = null;
+//
+//                if (nRun == pRun) {
+//                    nOsservazioniEffettuate++;
+//                    if (nOsservazioniEffettuate == nOsservazioni) {
+//                        testoOut += "  Osservazioni: " + nOsservazioni + "\n";
+//
+//                        double temp = 0;
+//                        for (int jj = 0; jj < pRun; jj++) {
+//                            temp += uSommaG[jj] / nOsservazioni;
+//                        }
+//                        en[nOsservazioni - 1] = temp / pRun;
+//                        testoOut += "   Media campionaria e(" + nOsservazioni + "): " + df.format(en[nOsservazioni - 1]) + "\n";
+////                System.out.println("   Media campionaria e(" + nOsservazioni + "): " + df.format(en[nOsservazioni - 1]) + "\n");
+//
+//                        double temp2 = 0;
+//                        for (int jj = 0; jj < pRun; jj++) {
+//                            temp2 += Math.pow(uSommaG[jj] / nOsservazioni - en[nOsservazioni - 1], 2);
+//                        }
+//                        vc[nOsservazioni - 1] = temp2 / (pRun - 1);
+//                        testoOut += "   Varianza campionaria s(" + nOsservazioni + "): " + df.format(vc[nOsservazioni - 1]) + "\n";
+//
+//                        framePlot1.addSerieMedia(nOsservazioni - 1, en[nOsservazioni - 1]);
+//                        framePlot1.addSerieVarianza(nOsservazioni - 1, vc[nOsservazioni - 1]);
+//
+//                        nRun = 0;
+//
+//                        uSommaG = new double[pRun];
+//
+//                        statoIniziale();
+//                        stopSequenziatore = true;
+//                    } else {
+//                        nRun = 0;
+//                    }
+//                }
+//                semaforo.release();
+//            } else {
+//                uSommaStat += jobCorrenteCpu.getTempoRisposta();
+//                nOsservazioniEffettuate++;
+//
+//                if ((nOsservazioniEffettuate - 1) == nOsservazioni) {
+//                    y[nRun - 1] = nOsservazioni;
+//                    x[nRun - 1] = uSommaStat;
+//                    stopSequenziatore = true;
+//                    nRun++;
+//                    statoEquilibrio();
+//                }
+//
+//                if ((nRun - 1) == pRun) {
+//                    cal.setSimulazione(new Evento(cal.getClock(), TipoEvento.FINE_SIMULAZIONE));
+//                }
+//            }
         }
         jobCorrenteCpu = null;
 
@@ -770,8 +828,8 @@ public class FrameWin extends javax.swing.JFrame {
         framePlot1.addMarker(f, Color.GREEN);
         framePlot1.addMarker(mediaInferiore, Color.RED);
         framePlot1.addMarker(mediaSuperiore, Color.RED);
-        testoOut += "Punto centrale: " + df.format(f) + " \nIntervallo di confidenza (u1, u2): (" + df.format(mediaInferiore) + ", " + df.format(mediaSuperiore) + ")\n";
-        testoOut += "----------------  FINE SIMULAZIONE  ---------------- \n";
+        testoOut += "Int. confidenza (u1, u2): (" + df.format(mediaInferiore) + ", " + df.format(mediaSuperiore) + ")\n";
+        testoOut += "-> FINE SIMULAZIONE <-\n";
         textOutput.setText(testoOut);
         textLimiteInferiore.setText(df.format(mediaInferiore));
         textLimiteSuperiore.setText(df.format(mediaSuperiore));
@@ -786,6 +844,7 @@ public class FrameWin extends javax.swing.JFrame {
     }
 
     public void setStabile() {
+        n0 = nOsservazioni;
         pRun = 40;
         nRun = 0;
         setStatoEquilibrio();
@@ -794,6 +853,10 @@ public class FrameWin extends javax.swing.JFrame {
     }
 
     private void statoEquilibrio() {
+        uSommaStat = 0d;
+        setnOsservazioni(genRouting.next(50, 100));
+        nOsservazioniEffettuate = 0;
+        /*
         cpuQueue = cpuQueueStabile.clona();
         ioQueue = ioQueueStabile.clona();
 
@@ -805,17 +868,16 @@ public class FrameWin extends javax.swing.JFrame {
         if (jobCorrenteIOStabile != null) {
             jobCorrenteIO = jobCorrenteIOStabile.clona();
         }
-        uSommaStat = 0d;
-        setN0(genRouting.next(50, 100));
-        nOss = 0;
 
         genArrivi.setSeme(semeArriviStabile);
-        genCentroCpu.setSeme(semeCentriStabile);
+        genCentroCpu.setSeme(semeCentroCpuStabile);
+        genCentroIo.setSeme(semeCentroIoStabile);
         genRouting.setSeme(semeRoutingStabile);
+         */
     }
 
     private void setStatoEquilibrio() {
-        testoOut += " ---> fase statistica con n0 = " + n0 + " <--- \n";
+        testoOut += "-> fase stat n0: " + n0 + " <-\n";
         x = new double[pRun];
         y = new double[pRun];
         cpuQueueStabile = cpuQueue.clona();
@@ -824,21 +886,20 @@ public class FrameWin extends javax.swing.JFrame {
         calendarioStabile = cal.clona();
         if (jobCorrenteCpu != null) {
             jobCorrenteCpuStabile = jobCorrenteCpu.clona();
-            jobCorrenteCpu = null;
         }
         if (jobCorrenteIO != null) {
             jobCorrenteIOStabile = jobCorrenteIO.clona();
-            jobCorrenteIO = null;
         }
 
         semeArriviStabile = genArrivi.getSeme();
-        semeCentriStabile = genCentroCpu.getSeme();
+        semeCentroCpuStabile = genCentroCpu.getSeme();
+        semeCentroIoStabile = genCentroIo.getSeme();
         semeRoutingStabile = genRouting.getSeme();
 
     }
 
-    public void setN0(int n0) {
-        this.n0 = n0;
+    public void setnOsservazioni(int nOsservazioni) {
+        this.nOsservazioni = nOsservazioni;
         stopSequenziatore = false;
     }
 

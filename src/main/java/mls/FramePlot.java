@@ -68,10 +68,11 @@ public class FramePlot extends JPanel {
         plotMedia = result.getXYPlot();
         ValueAxis axis = plotMedia.getDomainAxis();
         axis.setAutoRange(true);
-        axis.setFixedAutoRange(1000);
-        // axis.setFixedAutoRange(60000.0);  // 60 seconds
+        axis.setFixedAutoRange(1500);
+
         axis = plotMedia.getRangeAxis();
-        axis.setRange(0.15, .25);
+        axis.setAutoRange(true);
+        axis.setRange(50, 160);
         plotMedia.getRenderer().setSeriesPaint(0, Color.BLUE);
         return result;
     }
@@ -90,9 +91,11 @@ public class FramePlot extends JPanel {
         final XYPlot plot = result.getXYPlot();
         ValueAxis axis = plot.getDomainAxis();
         axis.setAutoRange(true);
+        axis.setFixedAutoRange(1500);
+
         axis = plot.getRangeAxis();
-        axis.setFixedAutoRange(1000);
-        axis.setRange(0.0, .04);
+        axis.setAutoRange(true);
+        axis.setRange(10, 100);
         plot.getRenderer().setSeriesPaint(0, Color.MAGENTA);
         return result;
     }
@@ -114,6 +117,7 @@ public class FramePlot extends JPanel {
         seriesMedia.clear();
         plotMedia.clearRangeMarkers();
     }
+
     public void resetSerieVarianza() {
         seriesVarianza.clear();
     }
