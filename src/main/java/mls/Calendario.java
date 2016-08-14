@@ -52,6 +52,23 @@ public class Calendario {
         }
 
         clock = min;
+        switch (out.getTipo()) {
+            case ARRIVO:
+                setArrivo(new Evento(Double.MAX_VALUE, ARRIVO));
+                break;
+            case FINE_CPU:
+                setCpu(new Evento(Double.MAX_VALUE, FINE_CPU));
+                break;
+            case FINE_IO:
+                setIo(new Evento(Double.MAX_VALUE, FINE_IO));
+                break;
+            case FINE_SIMULAZIONE:
+                setSimulazione(new Evento(Double.MAX_VALUE, FINE_SIMULAZIONE));
+                break;
+            default:
+                throw new AssertionError(out.getTipo().name());
+        }
+
         // System.out.println("Processo " + out.getTipo() + " al clock " + clock);
         return out;
     }

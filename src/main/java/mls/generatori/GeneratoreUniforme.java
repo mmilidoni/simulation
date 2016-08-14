@@ -14,19 +14,20 @@ import mls.util.Generatore;
 public class GeneratoreUniforme implements Generatore {
 
     private final long h, m;
-    private long a, xi;
+    private long a;
+    private double xi;
     private final int b;
 
     public GeneratoreUniforme() {
-        this(15l, 31, 1220703125);
+        this(15l);
     }
 
-    public GeneratoreUniforme(long xi, int b, int a) {
+    public GeneratoreUniforme(double xi) {
+        this.a = 3;
+        this.b = 28;
         this.xi = xi;
         this.h = (long) Math.pow(2, b - 2);
         this.m = (long) Math.pow(2, b);
-        this.a = a;
-        this.b = b;
     }
 
     @Override
@@ -40,4 +41,15 @@ public class GeneratoreUniforme implements Generatore {
         double i = next();
         return (int) (i * (b - a) + a);
     }
+
+    @Override
+    public void setSeme(double seme) {
+        xi = seme;
+    }
+
+    @Override
+    public double getSeme() {
+        return (int) xi;
+    }
+
 }

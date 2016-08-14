@@ -18,13 +18,14 @@ import mls.generatori.GeneratoreUniforme;
 public class Temp {
 
     public static void main(String[] args) {
-        DecimalFormat df = new DecimalFormat("#.#####");
-        GeneratoreUniforme gu = new GeneratoreUniforme();
-        GeneratoreEsponenziale ge = new GeneratoreEsponenziale(30, gu);
-        Generatore3Erlangiano ger = new Generatore3Erlangiano(0.5, new GeneratoreUniforme());
-        GeneratorePoissoniano gep = new GeneratorePoissoniano(0.5, new GeneratoreUniforme());
-        for (int i = 0; i < 5000; i++) {
-            System.out.println(df.format(gep.next()));
+        DecimalFormat df = new DecimalFormat("#.###########");
+        GeneratoreUniforme gu = new GeneratoreUniforme(117);
+        GeneratoreEsponenziale ge = new GeneratoreEsponenziale(160, gu);
+        Generatore3Erlangiano ger = new Generatore3Erlangiano(10, 1);
+        GeneratorePoissoniano gep = new GeneratorePoissoniano(160, 
+            new GeneratoreUniforme(135));
+        for (int i = 0; i < 10; i++) {
+            System.out.println(df.format(ge.next()));
         }
     }
 }

@@ -11,12 +11,11 @@ package mls;
  */
 public class Job {
 
-    private Double tempoRisposta, tempoProcessamento;
+    private Double tempoProcessamento;
     private double tempoArrivo;
     private double tempoUscita;
 
     public Job() {
-        tempoRisposta = 0.;
         tempoProcessamento = 0.;
         tempoArrivo = 0.;
         tempoUscita = 0.;
@@ -26,11 +25,11 @@ public class Job {
         return tempoProcessamento;
     }
 
-    public Double getTempoRisposta() {
-        return tempoRisposta;
+    public double getTempoRisposta() {
+        return tempoUscita - tempoArrivo;
     }
 
-    public void setTempoProcessamento(Double tempoProcessamento) {
+    public void setTempoProcessamento(double tempoProcessamento) {
         this.tempoProcessamento = tempoProcessamento;
     }
 
@@ -48,15 +47,12 @@ public class Job {
 
     public void setTempoUscita(double tempoUscita) {
         this.tempoUscita = tempoUscita;
-        tempoRisposta = tempoUscita - tempoArrivo;
-        //System.out.println("TEMPO RISPOSTA: " + tempoRisposta);
     }
 
     public Job clona() {
         Job j = new Job();
         j.tempoArrivo = this.tempoArrivo;
         j.tempoProcessamento = this.tempoProcessamento;
-        j.tempoRisposta = this.tempoRisposta;
         j.tempoUscita = this.tempoUscita;
         //j.tempoProcessamento = this.tempoProcessamento;
         return j;

@@ -13,22 +13,33 @@ import mls.util.Generatore;
  */
 public class GeneratorePoissoniano implements Generatore {
 
-    private final double lambda;
-    private final GeneratoreUniforme gm;
+    private final double media;
+    private final Generatore gm;
 
-    public GeneratorePoissoniano(double lambda, GeneratoreUniforme gm) {
-        this.lambda = lambda;
+    public GeneratorePoissoniano(double media, Generatore gm) {
+        this.media = media;
         this.gm = gm;
     }
 
     @Override
     public double next() {
         int n = 0;
-        double prod = 1;
-        while (prod >= Math.exp(-lambda)) {
+        double prod = gm.next();
+        while (prod >= Math.exp(-media)) {
             prod *= gm.next();
             n++;
         }
         return n;
     }
+
+    @Override
+    public void setSeme(double seme) {
+        gm.setSeme(seme);
+    }
+
+    @Override
+    public double getSeme() {
+        return gm.getSeme();
+    }
+
 }

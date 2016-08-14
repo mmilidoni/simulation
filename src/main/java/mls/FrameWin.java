@@ -7,7 +7,6 @@ package mls;
 
 import java.awt.Color;
 import java.text.DecimalFormat;
-import java.util.PriorityQueue;
 import java.util.concurrent.Semaphore;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -22,7 +21,6 @@ import mls.util.CodaLIFO;
 import mls.util.CodaSPTF;
 import mls.util.Generatore;
 import mls.util.JobComparator;
-import mls.util.StatoCorrente;
 import mls.util.TipoEvento;
 
 /**
@@ -37,11 +35,13 @@ public class FrameWin extends javax.swing.JFrame {
     private Coda<Job> ioQueue;
 
     private Generatore genArrivi;
-    private Generatore genCentri;
-    private GeneratoreUniforme genUni;
+    private Generatore genCentroCpu;
+    private Generatore genCentroIo;
+    private GeneratoreUniforme genRouting;
     private Job jobCorrenteCpu;
     private Job jobCorrenteIO;
     private int pRun;
+    private final int passo = 5;
     private int n0, nRun = 0, nOss = 0;
     private double uSommaG[];
     private double en[];
@@ -63,7 +63,6 @@ public class FrameWin extends javax.swing.JFrame {
     private String testoOut = "";
     private boolean fineSimulazione = false;
 
-    private StatoCorrente[] statiCorrenti;
     private final Semaphore semaforo;
 
     /**
@@ -72,6 +71,7 @@ public class FrameWin extends javax.swing.JFrame {
     public FrameWin() {
         initComponents();
         buttonAvvia.setEnabled(true);
+        buttonAvvia1.setEnabled(true);
         buttonStabile.setEnabled(false);
         df = new DecimalFormat("#.####");
         semaforo = new Semaphore(1);
@@ -454,6 +454,7 @@ public class FrameWin extends javax.swing.JFrame {
             semaforo.acquire();
             setStabile();
             buttonAvvia.setEnabled(false);
+            buttonAvvia1.setEnabled(false);
             buttonStabile.setEnabled(false);
             buttonStabile.setText("CALCOLO INTERVALLO DI CONFIDENZA IN CORSO");
             semaforo.release();
@@ -475,6 +476,7 @@ public class FrameWin extends javax.swing.JFrame {
         };
 
         buttonAvvia.setEnabled(false);
+        buttonAvvia1.setEnabled(false);
         buttonStabile.setEnabled(true);
         worker.execute();
     }//GEN-LAST:event_buttonAvvia1ActionPerformed
@@ -501,15 +503,22 @@ public class FrameWin extends javax.swing.JFrame {
         };
 
         buttonAvvia.setEnabled(false);
+        buttonAvvia1.setEnabled(false);
         buttonStabile.setEnabled(true);
         worker.execute();
     }//GEN-LAST:event_buttonAvviaActionPerformed
 
+    private final double semeArrivi = 229;
+    private final double semeCentroCpu = 233;
+    private final double semeCentroIo = 283;
+    private final double semeRouting = 227;
+    private double semeArriviStabile = 229;
+    private double semeCentriStabile = 233;
+    private double semeRoutingStabile = 227;
+
     public void avviaSimulazione(int pRun, double Ta, double Ts) {
         double gamma = 1 / Ta;
         double mu = 1 / Ts;
-        nRun = 0;
-        nOss = 0;
         textLimiteInferiore.setText("");
         textLimiteSuperiore.setText("");
         textPuntoCentrale.setText("");
@@ -517,21 +526,21 @@ public class FrameWin extends javax.swing.JFrame {
         textOutput.setText("");
         testoOut = "---------------- INIZIO SIMULAZIONE ---------------- \n";
         int nMax = 2000;
-        genUni = new GeneratoreUniforme(75l, 31, 1220703125);
+        genRouting = new GeneratoreUniforme(semeRouting);
         if (convalida) {
-            genArrivi = new GeneratorePoissoniano(Ta, new GeneratoreUniforme(17l, 31, 1220703125));
-            genCentri = new GeneratoreEsponenziale(Ts, new GeneratoreUniforme(95l, 31, 1220703125));
+            genArrivi = new GeneratorePoissoniano(Ta, new GeneratoreUniforme(semeArrivi));
+            genCentroCpu = new GeneratoreEsponenziale(Ts, new GeneratoreUniforme(semeCentroCpu));
+            genCentroIo = new GeneratoreEsponenziale(Ts, new GeneratoreUniforme(semeCentroIo));
         } else {
-            genArrivi = new GeneratoreEsponenziale(Ta, new GeneratoreUniforme(17l, 31, 1220703125));
-            double ts3 = Ts / 3;
-            genCentri = new Generatore3Erlangiano(Ts,
-                    new GeneratoreEsponenziale(ts3, new GeneratoreUniforme(255l, 31, 1220703125)));
+            genArrivi = new GeneratoreEsponenziale(Ta, new GeneratoreUniforme(semeArrivi));
+            genCentroCpu = new Generatore3Erlangiano(Ts, semeCentroCpu);
+            genCentroIo = new Generatore3Erlangiano(Ts, semeCentroIo);
         }
 
         statoIniziale();
 
         textGeneratoreArrivi.setText(genArrivi.getClass().getName());
-        textGeneratoreCentri.setText(genCentri.getClass().getName());
+        textGeneratoreCentri.setText(genCentroCpu.getClass().getName());
         textCodaCPU.setText(cpuQueue.getClass().getName());
         textCodaIO.setText(ioQueue.getClass().getName());
 
@@ -545,12 +554,11 @@ public class FrameWin extends javax.swing.JFrame {
 
         this.pRun = pRun;
         uSommaG = new double[pRun];
-        statiCorrenti = new StatoCorrente[pRun];
         testoOut += " ---> fase stabilizzazione con " + pRun + " run <--- \n";
         framePlot1.resetSerieMedia();
         framePlot1.resetSerieVarianza();
         //cal.setArrivo(new Evento(cal.getClock() + genArrivi.next(), TipoEvento.ARRIVO));
-        for (int n = 1; n <= nMax && !fineSimulazione; n++) {
+        for (int n = passo; n <= nMax && !fineSimulazione; n += passo) {
             setN0(n);
             sequenziatore();
         }
@@ -565,17 +573,20 @@ public class FrameWin extends javax.swing.JFrame {
             ioQueue = new CodaLIFO<>();
         }
 
+        genArrivi.setSeme(semeArrivi);
+        genCentroCpu.setSeme(semeCentroCpu);
+        genCentroIo.setSeme(semeCentroIo);
+        genRouting.setSeme(semeRouting);
+
         cal = new Calendario();
         cal.setArrivo(new Evento(cal.getClock() + genArrivi.next(), TipoEvento.ARRIVO));
         jobCorrenteCpu = null;
         jobCorrenteIO = null;
+        nOss = 0;
     }
 
     private void sequenziatore() {
         while (!stopSequenziatore) {
-            if (nRun == pRun) {
-                cal.setSimulazione(new Evento(cal.getClock(), TipoEvento.FINE_SIMULAZIONE));
-            }
             Evento e = cal.next();
             if (null != e.getTipo()) {
                 switch (e.getTipo()) {
@@ -602,29 +613,25 @@ public class FrameWin extends javax.swing.JFrame {
         cal.setArrivo(new Evento(cal.getClock() + genArrivi.next(), TipoEvento.ARRIVO));
 
         Job job = new Job();
-        job.setTempoProcessamento(genCentri.next());
         job.setTempoArrivo(cal.getClock());
-        //System.out.println(" ARRIVO ");
-        //System.out.println(job);
+        job.setTempoProcessamento(genCentroCpu.next());
 
         if (jobCorrenteCpu == null) {
             jobCorrenteCpu = job;
             cal.setCpu(new Evento(cal.getClock() + job.getTempoProcessamento(), TipoEvento.FINE_CPU));
-            //System.out.println("imposto jobCorrenteCpu");
         } else {
             cpuQueue.metti(job);
-            //System.out.println("metto il job in sptfQueue");
         }
     }
 
     private void fineCPU() {
-        double routing = genUni.next();
-        if (routing <= 0.9) {
+        double routing = genRouting.next();
+        if (routing < 0.9) {
             Job temp = jobCorrenteCpu.clona();
-            temp.setTempoProcessamento(genCentri.next());
             jobCorrenteCpu = null;
             if (jobCorrenteIO == null) {
                 jobCorrenteIO = temp;
+                jobCorrenteIO.setTempoProcessamento(genCentroIo.next());
                 cal.setIo(new Evento(cal.getClock() + jobCorrenteIO.getTempoProcessamento(), TipoEvento.FINE_IO));
                 //System.out.println("imposto jobCorrenteIO da CPU");
             } else {
@@ -632,74 +639,80 @@ public class FrameWin extends javax.swing.JFrame {
                 //System.out.println("metto il job in lifoQueue");
             }
 
-        } else if (!stabile) {
-            jobCorrenteCpu.setTempoUscita(cal.getClock());
-            //getStatoCorrente();
-            try {
-                semaforo.acquire();
-            } catch (InterruptedException ex) {
-                Logger.getLogger(FrameWin.class.getName()).log(Level.SEVERE, null, ex);
-            }
-            //System.out.print("Aggiungo a uSommaG: " + jobCorrenteCpu.getTempoRisposta());
-            uSommaG[nRun++] += jobCorrenteCpu.getTempoRisposta();
-            System.out.println("TR: " + jobCorrenteCpu.getTempoRisposta());
-            //System.out.println("\tRun" + (nRun - 1) + "):\t" + uSommaG[(nRun - 1)]);
-            jobCorrenteCpu = null;
-
-            if (nRun == pRun) {
-                testoOut += "  Osservazioni: " + n0 + "\n";
-
-                double temp = 0;
-                for (int jj = 0; jj < pRun; jj++) {
-                    temp += uSommaG[jj] / n0;
-                }
-                en[n0 - 1] = temp / pRun;
-                testoOut += "   Media campionaria e(" + n0 + "): " + df.format(en[n0 - 1]) + "\n";
-                System.out.println("   Media campionaria e(" + n0 + "): " + df.format(en[n0 - 1]) + "\n");
-
-                double temp2 = 0;
-                for (int jj = 0; jj < pRun; jj++) {
-                    temp2 += Math.pow(uSommaG[jj] / n0 - en[n0 - 1], 2);
-                }
-                vc[n0 - 1] = temp2 / (pRun - 1);
-                testoOut += "   Varianza campionaria s(" + n0 + "): " + df.format(vc[n0 - 1]) + "\n";
-
-                framePlot1.addSerieMedia(n0 - 1, en[n0 - 1]);
-                framePlot1.addSerieVarianza(n0 - 1, vc[n0 - 1]);
-
-                nRun = 0;
-                stopSequenziatore = true;
-            }
-            if (n0 == 1) {
-                statoIniziale();
-            }
-            //setStatoCorrente();
-            semaforo.release();
-
         } else {
-            uSommaStat += jobCorrenteCpu.getTempoRisposta();
-            nOss++;
+            jobCorrenteCpu.setTempoUscita(cal.getClock());
+            if (!stabile) {
+                //getStatoCorrente();
+                try {
+                    semaforo.acquire();
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(FrameWin.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                //System.out.print("Aggiungo a uSommaG: " + jobCorrenteCpu.getTempoRisposta());
+                uSommaG[nRun++] += jobCorrenteCpu.getTempoRisposta();
+                //System.out.println("TR: " + jobCorrenteCpu.getTempoRisposta());
+                //System.out.println("\tRun" + (nRun - 1) + "):\t" + uSommaG[(nRun - 1)]);
+                jobCorrenteCpu = null;
 
-            if (nOss == n0) {
-                y[nRun] = n0;
-                x[nRun] = uSommaStat;
-                nRun++;
-                stopSequenziatore = true;
-                statoEquilibrio();
-            }
+                if (nRun == pRun) {
+                    nOss++;
+                    if (nOss == n0) {
+                        testoOut += "  Osservazioni: " + n0 + "\n";
 
-            if (nRun == pRun) {
-                cal.setSimulazione(new Evento(cal.getClock(), TipoEvento.FINE_SIMULAZIONE));
+                        double temp = 0;
+                        for (int jj = 0; jj < pRun; jj++) {
+                            temp += uSommaG[jj] / n0;
+                        }
+                        en[n0 - 1] = temp / pRun;
+                        testoOut += "   Media campionaria e(" + n0 + "): " + df.format(en[n0 - 1]) + "\n";
+//                System.out.println("   Media campionaria e(" + n0 + "): " + df.format(en[n0 - 1]) + "\n");
+
+                        double temp2 = 0;
+                        for (int jj = 0; jj < pRun; jj++) {
+                            temp2 += Math.pow(uSommaG[jj] / n0 - en[n0 - 1], 2);
+                        }
+                        vc[n0 - 1] = temp2 / (pRun - 1);
+                        testoOut += "   Varianza campionaria s(" + n0 + "): " + df.format(vc[n0 - 1]) + "\n";
+
+                        framePlot1.addSerieMedia(n0 - 1, en[n0 - 1]);
+                        framePlot1.addSerieVarianza(n0 - 1, vc[n0 - 1]);
+
+                        nRun = 0;
+
+                        uSommaG = new double[pRun];
+
+                        statoIniziale();
+                        stopSequenziatore = true;
+                    } else {
+                        nRun = 0;
+                    }
+                }
+                //setStatoCorrente();
+                semaforo.release();
+
+            } else {
+                uSommaStat += jobCorrenteCpu.getTempoRisposta();
+                nOss++;
+
+                if ((nOss - 1) == n0) {
+                    y[nRun - 1] = n0;
+                    x[nRun - 1] = uSommaStat;
+                    stopSequenziatore = true;
+                    nRun++;
+                    statoEquilibrio();
+                }
+
+                if ((nRun - 1) == pRun) {
+                    cal.setSimulazione(new Evento(cal.getClock(), TipoEvento.FINE_SIMULAZIONE));
+                }
             }
         }
-
         jobCorrenteCpu = null;
 
         if (!cpuQueue.isEmpty()) {
             jobCorrenteCpu = (Job) cpuQueue.togli();
-            jobCorrenteCpu.setTempoProcessamento(genCentri.next());
+            jobCorrenteCpu.setTempoProcessamento(genCentroCpu.next());
             cal.setCpu(new Evento(cal.getClock() + jobCorrenteCpu.getTempoProcessamento(), TipoEvento.FINE_CPU));
-            //System.out.println("prelevo un job da cpuQueue " + cpuQueue.size());
         } else {
             cal.setCpu(new Evento(Double.MAX_VALUE, TipoEvento.FINE_CPU));
         }
@@ -707,53 +720,21 @@ public class FrameWin extends javax.swing.JFrame {
 
     private void fineIO() {
         Job temp = jobCorrenteIO.clona();
-        temp.setTempoProcessamento(genCentri.next());
         jobCorrenteIO = null;
         if (jobCorrenteCpu == null) {
             jobCorrenteCpu = temp;
+            jobCorrenteCpu.setTempoProcessamento(genCentroCpu.next());
             cal.setCpu(new Evento(cal.getClock() + jobCorrenteCpu.getTempoProcessamento(), TipoEvento.FINE_CPU));
-            //System.out.println("imposto jobCorrenteCpu da IO");
         } else {
             cpuQueue.metti(temp);
-            //System.out.println("metto il job in sptfQueue");
         }
 
         if (!ioQueue.isEmpty()) {
             jobCorrenteIO = (Job) ioQueue.togli();
-            jobCorrenteIO.setTempoProcessamento(genCentri.next());
+            jobCorrenteIO.setTempoProcessamento(genCentroIo.next());
             cal.setIo(new Evento(cal.getClock() + jobCorrenteIO.getTempoProcessamento(), TipoEvento.FINE_IO));
-            //System.out.println("prelevo un job da ioQueue");
         } else {
             cal.setIo(new Evento(Double.MAX_VALUE, TipoEvento.FINE_IO));
-        }
-    }
-
-    private void setStatoCorrente() {
-        if (nRun > 0) {
-            StatoCorrente sc = new StatoCorrente();
-            sc.setCalendario(cal.clona());
-            sc.setCpuQueue(cpuQueue.clona());
-            sc.setIoQueue(ioQueue.clona());
-            /*
-            if (jobCorrenteCpu != null) {
-                sc.setJobCorrenteCpu(jobCorrenteCpu.clona());
-            }
-            if (jobCorrenteIO != null) {
-                sc.setJobCorrenteIO(jobCorrenteIO.clona());
-            }
-             */
-            statiCorrenti[nRun - 1] = sc;
-        }
-    }
-
-    private void getStatoCorrente() {
-        if (nRun > 0) {
-            StatoCorrente sc = statiCorrenti[nRun - 1];
-            cal = sc.getCalendario().clona();
-            cpuQueue = sc.getCpuQueue();
-            ioQueue = sc.getIoQueue();
-            //  jobCorrenteCpu = sc.getJobCorrenteCpu();
-            //  jobCorrenteIO = sc.getJobCorrenteIO();
         }
     }
 
@@ -797,6 +778,7 @@ public class FrameWin extends javax.swing.JFrame {
         textPuntoCentrale.setText(df.format(f));
 
         buttonAvvia.setEnabled(true);
+        buttonAvvia1.setEnabled(true);
         buttonStabile.setEnabled(false);
         buttonStabile.setText("SISTEMA STABILE");
         stopSequenziatore = true;
@@ -805,53 +787,39 @@ public class FrameWin extends javax.swing.JFrame {
 
     public void setStabile() {
         pRun = 40;
+        nRun = 0;
         setStatoEquilibrio();
         this.stabile = true;
         statoEquilibrio();
     }
 
     private void statoEquilibrio() {
-        if (convalida) {
-            cpuQueue = cpuQueueStabile.clona();
-            ioQueue = ioQueueStabile.clona();
-//            cpuQueue = Clona.fifoQueue((CodaFIFO<Job>) cpuQueueStabile);
-//            ioQueue = Clona.fifoQueue((CodaFIFO<Job>) ioQueueStabile);
-        } else {
-            cpuQueue = cpuQueueStabile.clona();
-            ioQueue = ioQueueStabile.clona();
-//            cpuQueue = Clona.sptfQueue((CodaSPTF<Job>) cpuQueueStabile);
-//            ioQueue = Clona.lifoQueue((CodaLIFO<Job>) ioQueueStabile);
-        }
+        cpuQueue = cpuQueueStabile.clona();
+        ioQueue = ioQueueStabile.clona();
+
         cal = calendarioStabile.clona();
-//        calendario = Clona.calendario(calendarioStabile);
+
         if (jobCorrenteCpuStabile != null) {
             jobCorrenteCpu = jobCorrenteCpuStabile.clona();
-            jobCorrenteCpuStabile = null;
         }
         if (jobCorrenteIOStabile != null) {
             jobCorrenteIO = jobCorrenteIOStabile.clona();
-            jobCorrenteIOStabile = null;
         }
         uSommaStat = 0d;
-        setN0(genUni.next(50, 100));
+        setN0(genRouting.next(50, 100));
         nOss = 0;
+
+        genArrivi.setSeme(semeArriviStabile);
+        genCentroCpu.setSeme(semeCentriStabile);
+        genRouting.setSeme(semeRoutingStabile);
     }
 
     private void setStatoEquilibrio() {
         testoOut += " ---> fase statistica con n0 = " + n0 + " <--- \n";
         x = new double[pRun];
         y = new double[pRun];
-        if (convalida) {
-            cpuQueueStabile = cpuQueue.clona();
-            ioQueueStabile = ioQueue.clona();
-//            cpuQueueStabile = Clona.fifoQueue((CodaFIFO<Job>) cpuQueue);
-//            ioQueueStabile = Clona.fifoQueue((CodaFIFO<Job>) ioQueue);
-        } else {
-            cpuQueueStabile = cpuQueue.clona();
-            ioQueueStabile = ioQueue.clona();
-//            cpuQueueStabile = Clona.sptfQueue((CodaSPTF<Job>) cpuQueue);
-//            ioQueueStabile = Clona.lifoQueue((CodaLIFO<Job>) ioQueue);
-        }
+        cpuQueueStabile = cpuQueue.clona();
+        ioQueueStabile = ioQueue.clona();
 
         calendarioStabile = cal.clona();
         if (jobCorrenteCpu != null) {
@@ -862,12 +830,16 @@ public class FrameWin extends javax.swing.JFrame {
             jobCorrenteIOStabile = jobCorrenteIO.clona();
             jobCorrenteIO = null;
         }
+
+        semeArriviStabile = genArrivi.getSeme();
+        semeCentriStabile = genCentroCpu.getSeme();
+        semeRoutingStabile = genRouting.getSeme();
+
     }
 
     public void setN0(int n0) {
         this.n0 = n0;
         stopSequenziatore = false;
-//        System.out.println("imposto n0 = " + n0);
     }
 
     /**
@@ -880,21 +852,20 @@ public class FrameWin extends javax.swing.JFrame {
          * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
          */
         try {
+            javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName());
+            /*
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
+                if ("GTK+".equals(info.getName())) {
                     javax.swing.UIManager.setLookAndFeel(info.getClassName());
                     break;
                 }
             }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(FrameWin.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(FrameWin.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(FrameWin.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+             */
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | javax.swing.UnsupportedLookAndFeelException ex) {
             java.util.logging.Logger.getLogger(FrameWin.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
+        //</editor-fold>
+
         //</editor-fold>
 
         /* Create and display the form */

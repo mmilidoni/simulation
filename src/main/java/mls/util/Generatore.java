@@ -12,4 +12,8 @@ package mls.util;
 public interface Generatore {
 
     public double next();
+    
+    public void setSeme(double seme);
+    
+    public double getSeme();
 }

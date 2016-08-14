@@ -25,4 +25,15 @@ public class GeneratoreEsponenziale implements Generatore {
     public double next() {
         return (double) (-Ta * Math.log(gm.next()));
     }
+
+    @Override
+    public void setSeme(double seme) {
+        gm.setSeme(seme);
+    }
+
+    @Override
+    public double getSeme() {
+        return gm.getSeme();
+    }
+
 }
