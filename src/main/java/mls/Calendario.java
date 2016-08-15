@@ -95,32 +95,64 @@ public class Calendario {
         return arrivo;
     }
 
-    public void setArrivo(Evento arrivo) {
+    private void setArrivo(Evento arrivo) {
         this.arrivo = arrivo;
+    }
+
+    public void addArrivo(double servizio) {
+        setArrivo(new Evento(getClock() + servizio, ARRIVO));
+    }
+
+    public void resetArrivo() {
+        setArrivo(new Evento(Double.MAX_VALUE, ARRIVO));
     }
 
     public Evento getCpu() {
         return cpu;
     }
 
-    public void setCpu(Evento cpu) {
+    private void setCpu(Evento cpu) {
         this.cpu = cpu;
+    }
+
+    public void addCpu(double servizio) {
+        setCpu(new Evento(getClock() + servizio, FINE_CPU));
+    }
+
+    public void resetCpu() {
+        setCpu(new Evento(Double.MAX_VALUE, FINE_CPU));
     }
 
     public Evento getCpu2() {
         return cpu2;
     }
 
-    public void setCpu2(Evento cpu2) {
+    private void setCpu2(Evento cpu2) {
         this.cpu2 = cpu2;
+    }
+
+    public void addCpu2(double servizio) {
+        setCpu2(new Evento(getClock() + servizio, FINE_CPU2));
+    }
+
+    public void resetCpu2() {
+        setCpu2(new Evento(Double.MAX_VALUE, FINE_CPU2));
     }
 
     public Evento getIo() {
         return io;
     }
 
-    public void setIo(Evento io) {
+    private void setIo(Evento io) {
         this.io = io;
+    }
+
+    public void addIo(double servizio) {
+        setIo(new Evento(getClock() + servizio, FINE_IO));
+    }
+
+    public void resetIo() {
+        setIo(new Evento(Double.MAX_VALUE, FINE_IO));
     }
 
     public Evento getSimulazione() {

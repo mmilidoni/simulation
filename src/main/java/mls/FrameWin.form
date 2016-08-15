@@ -147,11 +147,6 @@
           </Properties>
         </Component>
         <Component class="javax.swing.JLabel" name="jLabel2">
-          <Properties>
-            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="2" name="/home/michele/NetBeansProjects/MLS_Milidoni_Finale_bak/src/main/java/mls/schema1.png"/>
-            </Property>
-          </Properties>
         </Component>
         <Component class="javax.swing.JSeparator" name="jSeparator1">
           <Properties>
@@ -164,7 +159,7 @@
             <DimensionLayout dim="0">
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
-                      <Component id="jLabel3" max="32767" attributes="0"/>
+                      <Component id="jLabel3" pref="212" max="32767" attributes="0"/>
                       <EmptySpace min="-2" pref="48" max="-2" attributes="0"/>
                   </Group>
                   <Group type="102" alignment="0" attributes="0">
@@ -177,9 +172,13 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="textTa" max="32767" attributes="0"/>
-                          <Component id="textTs" max="32767" attributes="0"/>
                           <Component id="textP" max="32767" attributes="0"/>
-                          <Component id="buttonAvvia1" alignment="0" max="32767" attributes="0"/>
+                          <Component id="buttonConvalida" alignment="0" max="32767" attributes="0"/>
+                          <Group type="102" attributes="0">
+                              <Component id="textTsCpu" min="-2" pref="65" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="textTsIO" max="32767" attributes="0"/>
+                          </Group>
                       </Group>
                   </Group>
               </Group>
@@ -196,17 +195,18 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="jLabel5" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="textTs" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="textTsCpu" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="textTsIO" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace max="-2" attributes="0"/>
+                      <EmptySpace min="-2" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="jLabel6" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="textP" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace max="32767" attributes="0"/>
-                      <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="buttonAvvia" alignment="3" min="-2" pref="46" max="-2" attributes="0"/>
-                          <Component id="buttonAvvia1" alignment="3" min="-2" pref="46" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="buttonAvvia" pref="37" max="32767" attributes="0"/>
+                          <Component id="buttonConvalida" max="32767" attributes="0"/>
                       </Group>
                   </Group>
               </Group>
@@ -216,6 +216,7 @@
             <Component class="javax.swing.JFormattedTextField" name="textTa">
               <Properties>
                 <Property name="text" type="java.lang.String" value="30"/>
+                <Property name="toolTipText" type="java.lang.String" value="Tempo di arrivo"/>
               </Properties>
             </Component>
             <Component class="javax.swing.JButton" name="buttonAvvia">
@@ -254,6 +255,7 @@
                   <Format subtype="0" type="0"/>
                 </Property>
                 <Property name="text" type="java.lang.String" value="30"/>
+                <Property name="toolTipText" type="java.lang.String" value="Run di stabilizzazione"/>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="textPActionPerformed"/>
@@ -261,18 +263,19 @@
             </Component>
             <Component class="javax.swing.JLabel" name="jLabel5">
               <Properties>
-                <Property name="text" type="java.lang.String" value="Ts"/>
+                <Property name="text" type="java.lang.String" value="Ts CPU / IO"/>
               </Properties>
             </Component>
-            <Component class="javax.swing.JFormattedTextField" name="textTs">
+            <Component class="javax.swing.JFormattedTextField" name="textTsCpu">
               <Properties>
                 <Property name="text" type="java.lang.String" value="2"/>
+                <Property name="toolTipText" type="java.lang.String" value="Tempo di servizio CPU"/>
               </Properties>
               <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="textTsActionPerformed"/>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="textTsCpuActionPerformed"/>
               </Events>
             </Component>
-            <Component class="javax.swing.JButton" name="buttonAvvia1">
+            <Component class="javax.swing.JButton" name="buttonConvalida">
               <Properties>
                 <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
                   <Font name="Ubuntu" size="18" style="0"/>
@@ -281,7 +284,16 @@
                 <Property name="toolTipText" type="java.lang.String" value=""/>
               </Properties>
               <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="buttonAvvia1ActionPerformed"/>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="buttonConvalidaActionPerformed"/>
+              </Events>
+            </Component>
+            <Component class="javax.swing.JFormattedTextField" name="textTsIO">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="2"/>
+                <Property name="toolTipText" type="java.lang.String" value="Tempo di servizio I/O"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="textTsIOActionPerformed"/>
               </Events>
             </Component>
           </SubComponents>
@@ -458,7 +470,7 @@
             </Component>
             <Component class="javax.swing.JLabel" name="jLabel13">
               <Properties>
-                <Property name="text" type="java.lang.String" value="Punto centrale:"/>
+                <Property name="text" type="java.lang.String" value="Limite inferiore:"/>
               </Properties>
             </Component>
             <Component class="javax.swing.JLabel" name="jLabel15">
@@ -468,7 +480,7 @@
             </Component>
             <Component class="javax.swing.JLabel" name="jLabel14">
               <Properties>
-                <Property name="text" type="java.lang.String" value="Limite inferiore:"/>
+                <Property name="text" type="java.lang.String" value="Punto centrale:"/>
               </Properties>
             </Component>
             <Component class="javax.swing.JTextField" name="textLimiteInferiore">

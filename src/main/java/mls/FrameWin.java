@@ -73,7 +73,7 @@ public class FrameWin extends javax.swing.JFrame {
     public FrameWin() {
         initComponents();
         buttonAvvia.setEnabled(true);
-        buttonAvvia1.setEnabled(true);
+        buttonConvalida.setEnabled(true);
         buttonStabile.setEnabled(false);
         df = new DecimalFormat("#.####");
         semaforo = new Semaphore(1);
@@ -102,8 +102,9 @@ public class FrameWin extends javax.swing.JFrame {
         jLabel3 = new javax.swing.JLabel();
         textP = new javax.swing.JFormattedTextField();
         jLabel5 = new javax.swing.JLabel();
-        textTs = new javax.swing.JFormattedTextField();
-        buttonAvvia1 = new javax.swing.JButton();
+        textTsCpu = new javax.swing.JFormattedTextField();
+        buttonConvalida = new javax.swing.JButton();
+        textTsIO = new javax.swing.JFormattedTextField();
         jSeparator5 = new javax.swing.JSeparator();
         jLabel7 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
@@ -141,11 +142,10 @@ public class FrameWin extends javax.swing.JFrame {
         jLabel1.setFont(new java.awt.Font("Ubuntu", 0, 24)); // NOI18N
         jLabel1.setText("Sistema simulato");
 
-        jLabel2.setIcon(new javax.swing.ImageIcon("/home/michele/NetBeansProjects/MLS_Milidoni_Finale_bak/src/main/java/mls/schema1.png")); // NOI18N
-
         jSeparator1.setOrientation(javax.swing.SwingConstants.VERTICAL);
 
         textTa.setText("30");
+        textTa.setToolTipText("Tempo di arrivo");
 
         buttonAvvia.setFont(new java.awt.Font("Ubuntu", 0, 18)); // NOI18N
         buttonAvvia.setText("Simula");
@@ -165,27 +165,37 @@ public class FrameWin extends javax.swing.JFrame {
 
         textP.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter()));
         textP.setText("30");
+        textP.setToolTipText("Run di stabilizzazione");
         textP.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 textPActionPerformed(evt);
             }
         });
 
-        jLabel5.setText("Ts");
+        jLabel5.setText("Ts CPU / IO");
 
-        textTs.setText("2");
-        textTs.addActionListener(new java.awt.event.ActionListener() {
+        textTsCpu.setText("2");
+        textTsCpu.setToolTipText("Tempo di servizio CPU");
+        textTsCpu.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                textTsActionPerformed(evt);
+                textTsCpuActionPerformed(evt);
             }
         });
 
-        buttonAvvia1.setFont(new java.awt.Font("Ubuntu", 0, 18)); // NOI18N
-        buttonAvvia1.setText("Convalida");
-        buttonAvvia1.setToolTipText("");
-        buttonAvvia1.addActionListener(new java.awt.event.ActionListener() {
+        buttonConvalida.setFont(new java.awt.Font("Ubuntu", 0, 18)); // NOI18N
+        buttonConvalida.setText("Convalida");
+        buttonConvalida.setToolTipText("");
+        buttonConvalida.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                buttonAvvia1ActionPerformed(evt);
+                buttonConvalidaActionPerformed(evt);
+            }
+        });
+
+        textTsIO.setText("2");
+        textTsIO.setToolTipText("Tempo di servizio I/O");
+        textTsIO.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                textTsIOActionPerformed(evt);
             }
         });
 
@@ -194,7 +204,7 @@ public class FrameWin extends javax.swing.JFrame {
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, 212, Short.MAX_VALUE)
                 .addGap(48, 48, 48))
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
@@ -205,9 +215,12 @@ public class FrameWin extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(textTa)
-                    .addComponent(textTs)
                     .addComponent(textP)
-                    .addComponent(buttonAvvia1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addComponent(buttonConvalida, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(textTsCpu, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(textTsIO))))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -220,15 +233,16 @@ public class FrameWin extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel5)
-                    .addComponent(textTs, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(textTsCpu, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(textTsIO, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel6)
                     .addComponent(textP, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(buttonAvvia, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(buttonAvvia1, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(buttonAvvia, javax.swing.GroupLayout.DEFAULT_SIZE, 37, Short.MAX_VALUE)
+                    .addComponent(buttonConvalida, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
         );
 
         jSeparator5.setOrientation(javax.swing.SwingConstants.VERTICAL);
@@ -334,11 +348,11 @@ public class FrameWin extends javax.swing.JFrame {
         textLimiteSuperiore.setEditable(false);
         textLimiteSuperiore.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
 
-        jLabel13.setText("Punto centrale:");
+        jLabel13.setText("Limite inferiore:");
 
         jLabel15.setText("Limite superiore:");
 
-        jLabel14.setText("Limite inferiore:");
+        jLabel14.setText("Punto centrale:");
 
         textLimiteInferiore.setEditable(false);
         textLimiteInferiore.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
@@ -495,7 +509,7 @@ public class FrameWin extends javax.swing.JFrame {
             semaforo.acquire();
             setStabile();
             buttonAvvia.setEnabled(false);
-            buttonAvvia1.setEnabled(false);
+            buttonConvalida.setEnabled(false);
             buttonStabile.setEnabled(false);
             buttonStabile.setText("CALCOLO INTERVALLO DI CONFIDENZA IN CORSO");
             semaforo.release();
@@ -504,27 +518,29 @@ public class FrameWin extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_buttonStabileActionPerformed
 
-    private void buttonAvvia1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonAvvia1ActionPerformed
+    private void buttonConvalidaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonConvalidaActionPerformed
         convalida = true;
         SwingWorker worker = new SwingWorker<Boolean, Void>() {
             @Override
             protected Boolean doInBackground() throws Exception {
                 avviaSimulazione(Integer.parseInt(textP.getText()),
                         Double.parseDouble(textTa.getText()),
-                        Double.parseDouble(textTs.getText()));
+                        Double.parseDouble(textTsCpu.getText()),
+                        Double.parseDouble(textTsIO.getText())
+                );
                 return true;
             }
         };
 
         buttonAvvia.setEnabled(false);
-        buttonAvvia1.setEnabled(false);
+        buttonConvalida.setEnabled(false);
         buttonStabile.setEnabled(true);
         worker.execute();
-    }//GEN-LAST:event_buttonAvvia1ActionPerformed
+    }//GEN-LAST:event_buttonConvalidaActionPerformed
 
-    private void textTsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_textTsActionPerformed
+    private void textTsCpuActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_textTsCpuActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_textTsActionPerformed
+    }//GEN-LAST:event_textTsCpuActionPerformed
 
     private void textPActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_textPActionPerformed
         // TODO add your handling code here:
@@ -538,30 +554,36 @@ public class FrameWin extends javax.swing.JFrame {
             protected Boolean doInBackground() throws Exception {
                 avviaSimulazione(Integer.parseInt(textP.getText()),
                         Double.parseDouble(textTa.getText()),
-                        Double.parseDouble(textTs.getText()));
+                        Double.parseDouble(textTsCpu.getText()),
+                        Double.parseDouble(textTsIO.getText())
+                );
                 return true;
             }
         };
 
         buttonAvvia.setEnabled(false);
-        buttonAvvia1.setEnabled(false);
+        buttonConvalida.setEnabled(false);
         buttonStabile.setEnabled(true);
         worker.execute();
     }//GEN-LAST:event_buttonAvviaActionPerformed
 
     private void jRadioButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jRadioButton1ActionPerformed
         singolaCPU = true;
-        textTs.setText("2");
+        textTsCpu.setText("2");
         jLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/schema1.png")));
     }//GEN-LAST:event_jRadioButton1ActionPerformed
 
     private void jRadioButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jRadioButton2ActionPerformed
         singolaCPU = false;
-        textTs.setText("4");
+        textTsCpu.setText("4");
         jLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/schema2.png")));
     }//GEN-LAST:event_jRadioButton2ActionPerformed
 
-    public void avviaSimulazione(int pRun, double Ta, double Ts) {
+    private void textTsIOActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_textTsIOActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_textTsIOActionPerformed
+
+    public void avviaSimulazione(int pRun, double Ta, double TsCPU, double TsIO) {
         textLimiteInferiore.setText("");
         textLimiteSuperiore.setText("");
         textPuntoCentrale.setText("");
@@ -572,14 +594,14 @@ public class FrameWin extends javax.swing.JFrame {
         genRouting = new GeneratoreUniforme(semeRouting);
         if (convalida) {
             genArrivi = new GeneratorePoissoniano(Ta, new GeneratoreUniforme(semeArrivi));
-            genCentroCpu = new GeneratoreEsponenziale(Ts, new GeneratoreUniforme(semeCentroCpu));
-            genCentroCpu2 = new GeneratoreEsponenziale(Ts, new GeneratoreUniforme(semeCentroCpu2));
-            genCentroIo = new GeneratoreEsponenziale(Ts, new GeneratoreUniforme(semeCentroIo));
+            genCentroCpu = new GeneratoreEsponenziale(TsCPU, new GeneratoreUniforme(semeCentroCpu));
+            genCentroCpu2 = new GeneratoreEsponenziale(TsCPU, new GeneratoreUniforme(semeCentroCpu2));
+            genCentroIo = new GeneratoreEsponenziale(TsIO, new GeneratoreUniforme(semeCentroIo));
         } else {
             genArrivi = new GeneratoreEsponenziale(Ta, new GeneratoreUniforme(semeArrivi));
-            genCentroCpu = new Generatore3Erlangiano(Ts, semeCentroCpu);
-            genCentroCpu2 = new Generatore3Erlangiano(Ts, semeCentroCpu2);
-            genCentroIo = new Generatore3Erlangiano(Ts, semeCentroIo);
+            genCentroCpu = new Generatore3Erlangiano(TsCPU, semeCentroCpu);
+            genCentroCpu2 = new Generatore3Erlangiano(TsCPU, semeCentroCpu2);
+            genCentroIo = new Generatore3Erlangiano(TsIO, semeCentroIo);
         }
 
         statoIniziale();
@@ -624,7 +646,7 @@ public class FrameWin extends javax.swing.JFrame {
         genRouting.setSeme(semeRouting);
 
         calendario = new Calendario();
-        calendario.setArrivo(new Evento(calendario.getClock() + genArrivi.next(), TipoEvento.ARRIVO));
+        calendario.addArrivo(genArrivi.next());
         jobCorrenteCpu = null;
         jobCorrenteCpu2 = null;
         jobCorrenteIO = null;
@@ -667,7 +689,7 @@ public class FrameWin extends javax.swing.JFrame {
     }
 
     private void arrivo() {
-        calendario.setArrivo(new Evento(calendario.getClock() + genArrivi.next(), TipoEvento.ARRIVO));
+        calendario.addArrivo(genArrivi.next());
 
         Job job = new Job();
         job.setTempoArrivo(calendario.getClock());
@@ -675,14 +697,14 @@ public class FrameWin extends javax.swing.JFrame {
 
         if (jobCorrenteCpu == null) {
             jobCorrenteCpu = job;
-            calendario.setCpu(new Evento(calendario.getClock() + job.getTempoProcessamento(), TipoEvento.FINE_CPU));
+            calendario.addCpu(jobCorrenteCpu.getTempoProcessamento());
         } else {
             cpuQueue.metti(job);
         }
     }
 
     private void arrivo2CPU() {
-        calendario.setArrivo(new Evento(calendario.getClock() + genArrivi.next(), TipoEvento.ARRIVO));
+        calendario.addArrivo(genArrivi.next());
 
         Job job = new Job();
         job.setTempoArrivo(calendario.getClock());
@@ -690,11 +712,11 @@ public class FrameWin extends javax.swing.JFrame {
         if (jobCorrenteCpu == null) {
             jobCorrenteCpu = job;
             jobCorrenteCpu.setTempoProcessamento(genCentroCpu.next());
-            calendario.setCpu(new Evento(calendario.getClock() + jobCorrenteCpu.getTempoProcessamento(), TipoEvento.FINE_CPU));
+            calendario.addCpu(jobCorrenteCpu.getTempoProcessamento());
         } else if (jobCorrenteCpu2 == null) {
             jobCorrenteCpu2 = job;
             jobCorrenteCpu2.setTempoProcessamento(genCentroCpu2.next());
-            calendario.setCpu2(new Evento(calendario.getClock() + jobCorrenteCpu2.getTempoProcessamento(), TipoEvento.FINE_CPU2));
+            calendario.addCpu2(jobCorrenteCpu2.getTempoProcessamento());
         } else {
             cpuQueue.metti(job);
         }
@@ -708,7 +730,7 @@ public class FrameWin extends javax.swing.JFrame {
             if (jobCorrenteIO == null) {
                 jobCorrenteIO = temp;
                 jobCorrenteIO.setTempoProcessamento(genCentroIo.next());
-                calendario.setIo(new Evento(calendario.getClock() + jobCorrenteIO.getTempoProcessamento(), TipoEvento.FINE_IO));
+                calendario.addIo(jobCorrenteIO.getTempoProcessamento());
             } else {
                 ioQueue.metti(temp);
             }
@@ -782,9 +804,9 @@ public class FrameWin extends javax.swing.JFrame {
         if (!cpuQueue.isEmpty()) {
             jobCorrenteCpu = (Job) cpuQueue.togli();
             jobCorrenteCpu.setTempoProcessamento(genCentroCpu.next());
-            calendario.setCpu(new Evento(calendario.getClock() + jobCorrenteCpu.getTempoProcessamento(), TipoEvento.FINE_CPU));
+            calendario.addCpu(jobCorrenteCpu.getTempoProcessamento());
         } else {
-            calendario.setCpu(new Evento(Double.MAX_VALUE, TipoEvento.FINE_CPU));
+            calendario.resetCpu();
         }
     }
 
@@ -796,7 +818,7 @@ public class FrameWin extends javax.swing.JFrame {
             if (jobCorrenteIO == null) {
                 jobCorrenteIO = temp;
                 jobCorrenteIO.setTempoProcessamento(genCentroIo.next());
-                calendario.setIo(new Evento(calendario.getClock() + jobCorrenteIO.getTempoProcessamento(), TipoEvento.FINE_IO));
+                calendario.addIo(jobCorrenteIO.getTempoProcessamento());
             } else {
                 ioQueue.metti(temp);
             }
@@ -870,9 +892,9 @@ public class FrameWin extends javax.swing.JFrame {
         if (!cpuQueue.isEmpty()) {
             jobCorrenteCpu2 = (Job) cpuQueue.togli();
             jobCorrenteCpu2.setTempoProcessamento(genCentroCpu2.next());
-            calendario.setCpu2(new Evento(calendario.getClock() + jobCorrenteCpu2.getTempoProcessamento(), TipoEvento.FINE_CPU2));
+            calendario.addCpu2(jobCorrenteCpu2.getTempoProcessamento());
         } else {
-            calendario.setCpu2(new Evento(Double.MAX_VALUE, TipoEvento.FINE_CPU2));
+            calendario.resetCpu2();
         }
     }
 
@@ -882,7 +904,7 @@ public class FrameWin extends javax.swing.JFrame {
         if (jobCorrenteCpu == null) {
             jobCorrenteCpu = temp;
             jobCorrenteCpu.setTempoProcessamento(genCentroCpu.next());
-            calendario.setCpu(new Evento(calendario.getClock() + jobCorrenteCpu.getTempoProcessamento(), TipoEvento.FINE_CPU));
+            calendario.addCpu(jobCorrenteCpu.getTempoProcessamento());
         } else {
             cpuQueue.metti(temp);
         }
@@ -890,9 +912,9 @@ public class FrameWin extends javax.swing.JFrame {
         if (!ioQueue.isEmpty()) {
             jobCorrenteIO = (Job) ioQueue.togli();
             jobCorrenteIO.setTempoProcessamento(genCentroIo.next());
-            calendario.setIo(new Evento(calendario.getClock() + jobCorrenteIO.getTempoProcessamento(), TipoEvento.FINE_IO));
+            calendario.addIo(jobCorrenteIO.getTempoProcessamento());
         } else {
-            calendario.setIo(new Evento(Double.MAX_VALUE, TipoEvento.FINE_IO));
+            calendario.resetIo();
         }
     }
 
@@ -902,11 +924,11 @@ public class FrameWin extends javax.swing.JFrame {
         if (jobCorrenteCpu == null) {
             jobCorrenteCpu = temp;
             jobCorrenteCpu.setTempoProcessamento(genCentroCpu.next());
-            calendario.setCpu(new Evento(calendario.getClock() + jobCorrenteCpu.getTempoProcessamento(), TipoEvento.FINE_CPU));
+            calendario.addCpu(jobCorrenteCpu.getTempoProcessamento());
         } else if (jobCorrenteCpu2 == null) {
             jobCorrenteCpu2 = temp;
             jobCorrenteCpu2.setTempoProcessamento(genCentroCpu2.next());
-            calendario.setCpu(new Evento(calendario.getClock() + jobCorrenteCpu2.getTempoProcessamento(), TipoEvento.FINE_CPU2));
+            calendario.addCpu2(jobCorrenteCpu2.getTempoProcessamento());
         } else {
             cpuQueue.metti(temp);
         }
@@ -914,9 +936,9 @@ public class FrameWin extends javax.swing.JFrame {
         if (!ioQueue.isEmpty()) {
             jobCorrenteIO = (Job) ioQueue.togli();
             jobCorrenteIO.setTempoProcessamento(genCentroIo.next());
-            calendario.setIo(new Evento(calendario.getClock() + jobCorrenteIO.getTempoProcessamento(), TipoEvento.FINE_IO));
+            calendario.addIo(jobCorrenteIO.getTempoProcessamento());
         } else {
-            calendario.setIo(new Evento(Double.MAX_VALUE, TipoEvento.FINE_IO));
+            calendario.resetIo();
         }
     }
 
@@ -960,7 +982,7 @@ public class FrameWin extends javax.swing.JFrame {
         textPuntoCentrale.setText(df.format(f));
 
         buttonAvvia.setEnabled(true);
-        buttonAvvia1.setEnabled(true);
+        buttonConvalida.setEnabled(true);
         buttonStabile.setEnabled(false);
         buttonStabile.setText("SISTEMA STABILE");
         stopSequenziatore = true;
@@ -986,9 +1008,7 @@ public class FrameWin extends javax.swing.JFrame {
         testoOut += "-> fase stat n0: " + n0 + " <-\n";
         x = new double[pRun];
         y = new double[pRun];
-
         uSommaStat = 0d;
-
     }
 
     public void setnOsservazioni(int nOsservazioni) {
@@ -999,29 +1019,23 @@ public class FrameWin extends javax.swing.JFrame {
     /**
      * @param args the command line arguments
      */
-    public static void main(String args[]) {
+    public static void main(String args[]) throws Exception {
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
         /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
          * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
          */
-        try {
-            javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName());
-            /*
+        javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName());
+        /*
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
                 if ("GTK+".equals(info.getName())) {
                     javax.swing.UIManager.setLookAndFeel(info.getClassName());
                     break;
                 }
             }
-             */
+         */
 
-        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(FrameWin.class
-                    .getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
         //</editor-fold>
-
         //</editor-fold>
 
         /* Create and display the form */
@@ -1036,7 +1050,7 @@ public class FrameWin extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton buttonAvvia;
-    private javax.swing.JButton buttonAvvia1;
+    private javax.swing.JButton buttonConvalida;
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.JButton buttonStabile;
     private mls.FramePlot framePlot1;
@@ -1078,6 +1092,7 @@ public class FrameWin extends javax.swing.JFrame {
     private javax.swing.JFormattedTextField textP;
     private javax.swing.JTextField textPuntoCentrale;
     private javax.swing.JFormattedTextField textTa;
-    private javax.swing.JFormattedTextField textTs;
+    private javax.swing.JFormattedTextField textTsCpu;
+    private javax.swing.JFormattedTextField textTsIO;
     // End of variables declaration//GEN-END:variables
 }
