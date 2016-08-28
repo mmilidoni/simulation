@@ -52,9 +52,8 @@ public class Job {
     public Job clona() {
         Job j = new Job();
         j.tempoArrivo = this.tempoArrivo;
-        //j.tempoProcessamento = this.tempoProcessamento;
-        //j.tempoUscita = this.tempoUscita;
-        //j.tempoProcessamento = this.tempoProcessamento;
+        j.tempoUscita = this.tempoUscita;
+        j.tempoProcessamento = this.tempoProcessamento;
         return j;
     }
 

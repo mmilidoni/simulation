@@ -42,14 +42,15 @@ public class FrameWin extends javax.swing.JFrame {
     private Job jobCorrenteCpu2;
     private Job jobCorrenteIO;
     private int pRun, runStatisticiRimanenti;
-    private final int passo = 1;
+    private final int passo = 10;
     private int nOsservazioni, nRun = 0, nOsservazioniEffettuate = 0, n0 = 0;
     private double tempiRispostaStab[];
     private double tempiRispostaStat[];
     private double en[];
     private double vc[];
     private double x[];
-    private double y[], nOsservazioniEffettuateStat[];
+    private double y[];
+    private int osservazioniStatisticheEffettuate;
     private boolean stopSequenziatore = false;
     private boolean stabile = false;
     private boolean convalida = false;
@@ -71,6 +72,11 @@ public class FrameWin extends javax.swing.JFrame {
     private double semeCentroCpu2Stabile;
     private double semeCentroIoStabile;
     private double semeRoutingStabile;
+    private Calendario calendarioStabile;
+    private Job jobCorrenteCpuStabile;
+    private Job jobCorrenteIOStabile;
+    private Coda cpuQueueStabile;
+    private Coda ioQueueStabile;
 
     /**
      * Creates new form FrameWin
@@ -797,19 +803,19 @@ public class FrameWin extends javax.swing.JFrame {
                     }
                 }
             } else {
-                if (nOsservazioniEffettuateStat[nRun] < osservazioniStatistiche[nRun]) {
-                    nOsservazioniEffettuateStat[nRun]++;
+                if (osservazioniStatisticheEffettuate < osservazioniStatistiche[nRun]) {
+                    osservazioniStatisticheEffettuate++;
                     tempiRispostaStat[nRun] += jobCorrenteCpu.getTempoRisposta();
                     jobCorrenteCpu = null;
-                    if (nOsservazioniEffettuateStat[nRun] == osservazioniStatistiche[nRun]) {
+                    if (osservazioniStatisticheEffettuate == osservazioniStatistiche[nRun]) {
                         runStatisticiRimanenti--;
+                        if (runStatisticiRimanenti == 0) {
+                            calendario.setSimulazione(new Evento(calendario.getClock(), TipoEvento.FINE_SIMULAZIONE));
+                        } else {
+                            nRun++;
+                            statoEquilibrio();
+                        }
                     }
-                }
-                nRun = (nRun + 1) % pRun;
-                if (runStatisticiRimanenti == 0) {
-                    calendario.setSimulazione(new Evento(calendario.getClock(), TipoEvento.FINE_SIMULAZIONE));
-                } else {
-                    statoEquilibrio();
                 }
             }
             semaforo.release();
@@ -882,21 +888,23 @@ public class FrameWin extends javax.swing.JFrame {
                     }
                 }
             } else {
-                nOsservazioniEffettuateStat[nRun]++;
-                if (nOsservazioniEffettuateStat[nRun] < osservazioniStatistiche[nRun]) {
-                    tempiRispostaStat[nRun] += jobCorrenteCpu2.getTempoRisposta();
-                    nRun = (nRun + 1) % pRun;
-                    jobCorrenteCpu2 = null;
-                    stopSequenziatore = true;
-                } else {
-                    runStatisticiRimanenti--;
-                }
+                /*
+                 osservazioniStatisticheEffettuate[nRun]++;
+                 if (osservazioniStatisticheEffettuate[nRun] < osservazioniStatistiche[nRun]) {
+                 tempiRispostaStat[nRun] += jobCorrenteCpu2.getTempoRisposta();
+                 nRun = (nRun + 1) % pRun;
+                 jobCorrenteCpu2 = null;
+                 stopSequenziatore = true;
+                 } else {
+                 runStatisticiRimanenti--;
+                 }
 
-                if (runStatisticiRimanenti == 0) {
-                    calendario.setSimulazione(new Evento(calendario.getClock(), TipoEvento.FINE_SIMULAZIONE));
-                } else {
-                    statoEquilibrio();
-                }
+                 if (runStatisticiRimanenti == 0) {
+                 calendario.setSimulazione(new Evento(calendario.getClock(), TipoEvento.FINE_SIMULAZIONE));
+                 } else {
+                 statoEquilibrio();
+                 }
+                 */
             }
             semaforo.release();
         }
@@ -1009,20 +1017,29 @@ public class FrameWin extends javax.swing.JFrame {
 
     public void setStabile() {
         n0 = nOsservazioni;
-        pRun = 80;
+        pRun = 4;
         nRun = 0;
         tempiRispostaStat = new double[pRun];
         osservazioniStatistiche = new double[pRun];
         for (int i = 0; i < pRun; i++) {
-            osservazioniStatistiche[i] = genRouting.next(70, 120);
+            osservazioniStatistiche[i] = genRouting.next(5, 10);
         }
 
+        cpuQueueStabile = cpuQueue.clona();
+        ioQueueStabile = cpuQueue.clona();
         runStatisticiRimanenti = pRun;
         testoOut += "-> fase stat n0: " + n0 + " <-\n";
         x = new double[pRun];
         y = new double[pRun];
-        nOsservazioniEffettuateStat = new double[pRun];
+        osservazioniStatisticheEffettuate = 0;
 
+        calendarioStabile = calendario.clona();
+        if (jobCorrenteCpu != null) {
+            jobCorrenteCpuStabile = jobCorrenteCpu.clona();
+        }
+        if (jobCorrenteIO != null) {
+            jobCorrenteIOStabile = jobCorrenteIO.clona();
+        }
         semeArriviStabile = genArrivi.getSeme();
         semeCentroCpuStabile = genCentroCpu.getSeme();
         semeCentroCpu2Stabile = genCentroCpu2.getSeme();
@@ -1037,14 +1054,24 @@ public class FrameWin extends javax.swing.JFrame {
         // impostare i semi sei generatori per ogni run
         setnOsservazioni((int) osservazioniStatistiche[nRun]);
         nOsservazioniEffettuate = 0;
-        /*
+
+        calendario = calendarioStabile.clona();
+        if (jobCorrenteCpuStabile != null) {
+            jobCorrenteCpu = jobCorrenteCpuStabile.clona();
+        }
+        if (jobCorrenteIOStabile != null) {
+            jobCorrenteIO = jobCorrenteIOStabile.clona();
+        }
+
+        cpuQueue = cpuQueueStabile.clona();
+        ioQueue = ioQueueStabile.clona();
         genArrivi.setSeme(semeArriviStabile);
         genCentroCpu.setSeme(semeCentroCpuStabile);
         genCentroCpu2.setSeme(semeCentroCpu2Stabile);
         genCentroIo.setSeme(semeCentroIoStabile);
         genRouting.setSeme(semeRoutingStabile);
-        */
 
+        osservazioniStatisticheEffettuate = 0;
     }
 
     public void setnOsservazioni(int nOsservazioni) {
@@ -1064,12 +1091,12 @@ public class FrameWin extends javax.swing.JFrame {
          */
         javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName());
         /*
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("GTK+".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
+         for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+         if ("GTK+".equals(info.getName())) {
+         javax.swing.UIManager.setLookAndFeel(info.getClassName());
+         break;
+         }
+         }
          */
 
         //</editor-fold>

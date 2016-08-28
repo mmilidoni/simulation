@@ -18,7 +18,7 @@ public class CodaSPTF<E> extends PriorityQueue implements Coda<E> {
     private final JobComparator jobComparator;
 
     public CodaSPTF(JobComparator jobComparator) {
-        super(jobComparator);
+        super(100, jobComparator);
         this.jobComparator = jobComparator;
     }
 

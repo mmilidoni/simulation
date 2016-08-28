@@ -72,7 +72,7 @@ public class FramePlot extends JPanel {
 
         axis = plotMedia.getRangeAxis();
         axis.setAutoRange(true);
-        axis.setRange(50, 160);
+        axis.setRange(75, 160);
         plotMedia.getRenderer().setSeriesPaint(0, Color.BLUE);
         return result;
     }
