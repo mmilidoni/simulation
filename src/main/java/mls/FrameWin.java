@@ -41,15 +41,15 @@ public class FrameWin extends javax.swing.JFrame {
     private Job jobCorrenteCpu;
     private Job jobCorrenteCpu2;
     private Job jobCorrenteIO;
-    private int pRun;
-    private final int passo = 10;
+    private int pRun, runStatisticiRimanenti;
+    private final int passo = 1;
     private int nOsservazioni, nRun = 0, nOsservazioniEffettuate = 0, n0 = 0;
-    private double uSommaG[];
+    private double tempiRispostaStab[];
+    private double tempiRispostaStat[];
     private double en[];
     private double vc[];
     private double x[];
-    private double y[];
-    private double uSommaStat;
+    private double y[], nOsservazioniEffettuateStat[];
     private boolean stopSequenziatore = false;
     private boolean stabile = false;
     private boolean convalida = false;
@@ -66,6 +66,11 @@ public class FrameWin extends javax.swing.JFrame {
     private final double semeCentroCpu2 = 255;
     private final double semeCentroIo = 283;
     private final double semeRouting = 227;
+    private double semeArriviStabile;
+    private double semeCentroCpuStabile;
+    private double semeCentroCpu2Stabile;
+    private double semeCentroIoStabile;
+    private double semeRoutingStabile;
 
     /**
      * Creates new form FrameWin
@@ -111,9 +116,9 @@ public class FrameWin extends javax.swing.JFrame {
         textOutput = new javax.swing.JTextPane();
         jRadioButton1 = new javax.swing.JRadioButton();
         jRadioButton2 = new javax.swing.JRadioButton();
+        buttonStabile = new javax.swing.JButton();
         jSeparator2 = new javax.swing.JSeparator();
         framePlot1 = new mls.FramePlot();
-        buttonStabile = new javax.swing.JButton();
         jLabel8 = new javax.swing.JLabel();
         jSeparator3 = new javax.swing.JSeparator();
         jPanel3 = new javax.swing.JPanel();
@@ -204,7 +209,7 @@ public class FrameWin extends javax.swing.JFrame {
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, 212, Short.MAX_VALUE)
+                .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGap(48, 48, 48))
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
@@ -272,6 +277,15 @@ public class FrameWin extends javax.swing.JFrame {
             }
         });
 
+        buttonStabile.setFont(new java.awt.Font("Ubuntu", 0, 18)); // NOI18N
+        buttonStabile.setText("AVVIA FASE STATISTICA");
+        buttonStabile.setToolTipText("");
+        buttonStabile.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                buttonStabileActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -291,7 +305,9 @@ public class FrameWin extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 6, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(buttonStabile, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -313,28 +329,19 @@ public class FrameWin extends javax.swing.JFrame {
                     .addComponent(jSeparator5)
                     .addComponent(jSeparator1, javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel2Layout.createSequentialGroup()
-                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                    .addComponent(jLabel1)
-                                    .addComponent(jRadioButton1)
-                                    .addComponent(jRadioButton2))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                            .addGroup(jPanel2Layout.createSequentialGroup()
-                                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(0, 0, Short.MAX_VALUE)))
-                        .addGap(12, 12, 12))))
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel1)
+                            .addComponent(jRadioButton1)
+                            .addComponent(jRadioButton2))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(12, 12, 12))
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(buttonStabile)
+                        .addGap(0, 0, Short.MAX_VALUE))))
         );
-
-        buttonStabile.setFont(new java.awt.Font("Ubuntu", 0, 18)); // NOI18N
-        buttonStabile.setText("SISTEMA STABILE");
-        buttonStabile.setToolTipText("");
-        buttonStabile.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                buttonStabileActionPerformed(evt);
-            }
-        });
 
         jLabel8.setFont(new java.awt.Font("Ubuntu", 0, 24)); // NOI18N
         jLabel8.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
@@ -474,14 +481,15 @@ public class FrameWin extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(jSeparator2)
             .addComponent(jSeparator3)
-            .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jLabel8, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                .addComponent(buttonStabile, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(framePlot1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(framePlot1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(0, 0, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -493,8 +501,6 @@ public class FrameWin extends javax.swing.JFrame {
                 .addComponent(jLabel8)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(framePlot1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(buttonStabile, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator3, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -508,10 +514,10 @@ public class FrameWin extends javax.swing.JFrame {
         try {
             semaforo.acquire();
             setStabile();
-            buttonAvvia.setEnabled(false);
-            buttonConvalida.setEnabled(false);
+//            buttonAvvia.setEnabled(false);
+//            buttonConvalida.setEnabled(false);
             buttonStabile.setEnabled(false);
-            buttonStabile.setText("CALCOLO INTERVALLO DI CONFIDENZA IN CORSO");
+            buttonStabile.setText("CALCOLO IN CORSO");
             semaforo.release();
         } catch (InterruptedException ex) {
             Logger.getLogger(FrameWin.class.getName()).log(Level.SEVERE, null, ex);
@@ -523,17 +529,22 @@ public class FrameWin extends javax.swing.JFrame {
         SwingWorker worker = new SwingWorker<Boolean, Void>() {
             @Override
             protected Boolean doInBackground() throws Exception {
-                avviaSimulazione(Integer.parseInt(textP.getText()),
-                        Double.parseDouble(textTa.getText()),
-                        Double.parseDouble(textTsCpu.getText()),
-                        Double.parseDouble(textTsIO.getText())
-                );
+                try {
+                    avviaSimulazione(Integer.parseInt(textP.getText()),
+                            Double.parseDouble(textTa.getText()),
+                            Double.parseDouble(textTsCpu.getText()),
+                            Double.parseDouble(textTsIO.getText())
+                    );
+                } catch (Exception e) {
+                    Logger.getLogger(FrameWin.class
+                            .getName()).log(Level.SEVERE, null, e);
+                }
                 return true;
             }
         };
 
-        buttonAvvia.setEnabled(false);
-        buttonConvalida.setEnabled(false);
+//        buttonAvvia.setEnabled(false);
+//        buttonConvalida.setEnabled(false);
         buttonStabile.setEnabled(true);
         worker.execute();
     }//GEN-LAST:event_buttonConvalidaActionPerformed
@@ -552,17 +563,22 @@ public class FrameWin extends javax.swing.JFrame {
         SwingWorker worker = new SwingWorker<Boolean, Void>() {
             @Override
             protected Boolean doInBackground() throws Exception {
-                avviaSimulazione(Integer.parseInt(textP.getText()),
-                        Double.parseDouble(textTa.getText()),
-                        Double.parseDouble(textTsCpu.getText()),
-                        Double.parseDouble(textTsIO.getText())
-                );
+                try {
+                    avviaSimulazione(Integer.parseInt(textP.getText()),
+                            Double.parseDouble(textTa.getText()),
+                            Double.parseDouble(textTsCpu.getText()),
+                            Double.parseDouble(textTsIO.getText())
+                    );
+                } catch (Exception e) {
+                    Logger.getLogger(FrameWin.class
+                            .getName()).log(Level.SEVERE, null, e);
+                }
                 return true;
             }
         };
 
-        buttonAvvia.setEnabled(false);
-        buttonConvalida.setEnabled(false);
+//        buttonAvvia.setEnabled(false);
+//        buttonConvalida.setEnabled(false);
         buttonStabile.setEnabled(true);
         worker.execute();
     }//GEN-LAST:event_buttonAvviaActionPerformed
@@ -590,7 +606,7 @@ public class FrameWin extends javax.swing.JFrame {
 
         textOutput.setText("");
         testoOut = "-> INIZIO SIMULAZIONE <-\n";
-        int nMax = 2000;
+        int nMax = 4000;
         genRouting = new GeneratoreUniforme(semeRouting);
         if (convalida) {
             genArrivi = new GeneratorePoissoniano(Ta, new GeneratoreUniforme(semeArrivi));
@@ -620,7 +636,7 @@ public class FrameWin extends javax.swing.JFrame {
         stopSequenziatore = false;
 
         this.pRun = pRun;
-        uSommaG = new double[pRun];
+        tempiRispostaStab = new double[pRun];
         testoOut += "-> stabilizzazione run: " + pRun + " <- \n";
         framePlot1.resetSerieMedia();
         framePlot1.resetSerieVarianza();
@@ -736,15 +752,16 @@ public class FrameWin extends javax.swing.JFrame {
             }
 
         } else {
+            try {
+                semaforo.acquire();
+            } catch (InterruptedException ex) {
+                Logger.getLogger(FrameWin.class
+                        .getName()).log(Level.SEVERE, null, ex);
+            }
+
             jobCorrenteCpu.setTempoUscita(calendario.getClock());
             if (!stabile) {
-                try {
-                    semaforo.acquire();
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(FrameWin.class
-                            .getName()).log(Level.SEVERE, null, ex);
-                }
-                uSommaG[nRun++] += jobCorrenteCpu.getTempoRisposta();
+                tempiRispostaStab[nRun++] += jobCorrenteCpu.getTempoRisposta();
                 jobCorrenteCpu = null;
 
                 if (nRun == pRun) {
@@ -754,14 +771,14 @@ public class FrameWin extends javax.swing.JFrame {
 
                         double temp = 0;
                         for (int jj = 0; jj < pRun; jj++) {
-                            temp += uSommaG[jj] / nOsservazioni;
+                            temp += tempiRispostaStab[jj] / nOsservazioni;
                         }
                         en[nOsservazioni - 1] = temp / pRun;
                         testoOut += "   E(" + nOsservazioni + "): " + df.format(en[nOsservazioni - 1]) + "\n";
 
                         double temp2 = 0;
                         for (int jj = 0; jj < pRun; jj++) {
-                            temp2 += Math.pow(uSommaG[jj] / nOsservazioni - en[nOsservazioni - 1], 2);
+                            temp2 += Math.pow(tempiRispostaStab[jj] / nOsservazioni - en[nOsservazioni - 1], 2);
                         }
                         vc[nOsservazioni - 1] = temp2 / (pRun - 1);
                         testoOut += "   s^2(" + nOsservazioni + "): " + df.format(vc[nOsservazioni - 1]) + "\n";
@@ -771,7 +788,7 @@ public class FrameWin extends javax.swing.JFrame {
 
                         nRun = 0;
 
-                        uSommaG = new double[pRun];
+                        tempiRispostaStab = new double[pRun];
 
                         statoIniziale();
                         stopSequenziatore = true;
@@ -779,25 +796,23 @@ public class FrameWin extends javax.swing.JFrame {
                         nRun = 0;
                     }
                 }
-                semaforo.release();
             } else {
-                nOsservazioniEffettuate++;
-                if ((nOsservazioniEffettuate - n0) > 0) {
-                    uSommaStat += jobCorrenteCpu.getTempoRisposta();
-
-                    if ((nOsservazioniEffettuate - n0) == nOsservazioni) {
-                        y[nRun - 1] = nOsservazioni;
-                        x[nRun - 1] = uSommaStat;
-                        stopSequenziatore = true;
-                        nRun++;
-                        statoEquilibrio();
-                    }
-
-                    if ((nRun - 1) == pRun) {
-                        calendario.setSimulazione(new Evento(calendario.getClock(), TipoEvento.FINE_SIMULAZIONE));
+                if (nOsservazioniEffettuateStat[nRun] < osservazioniStatistiche[nRun]) {
+                    nOsservazioniEffettuateStat[nRun]++;
+                    tempiRispostaStat[nRun] += jobCorrenteCpu.getTempoRisposta();
+                    jobCorrenteCpu = null;
+                    if (nOsservazioniEffettuateStat[nRun] == osservazioniStatistiche[nRun]) {
+                        runStatisticiRimanenti--;
                     }
                 }
+                nRun = (nRun + 1) % pRun;
+                if (runStatisticiRimanenti == 0) {
+                    calendario.setSimulazione(new Evento(calendario.getClock(), TipoEvento.FINE_SIMULAZIONE));
+                } else {
+                    statoEquilibrio();
+                }
             }
+            semaforo.release();
         }
         jobCorrenteCpu = null;
 
@@ -824,15 +839,15 @@ public class FrameWin extends javax.swing.JFrame {
             }
 
         } else {
+            try {
+                semaforo.acquire();
+            } catch (InterruptedException ex) {
+                Logger.getLogger(FrameWin.class
+                        .getName()).log(Level.SEVERE, null, ex);
+            }
             jobCorrenteCpu2.setTempoUscita(calendario.getClock());
             if (!stabile) {
-                try {
-                    semaforo.acquire();
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(FrameWin.class
-                            .getName()).log(Level.SEVERE, null, ex);
-                }
-                uSommaG[nRun++] += jobCorrenteCpu2.getTempoRisposta();
+                tempiRispostaStab[nRun++] += jobCorrenteCpu2.getTempoRisposta();
                 jobCorrenteCpu2 = null;
 
                 if (nRun == pRun) {
@@ -842,14 +857,14 @@ public class FrameWin extends javax.swing.JFrame {
 
                         double temp = 0;
                         for (int jj = 0; jj < pRun; jj++) {
-                            temp += uSommaG[jj] / nOsservazioni;
+                            temp += tempiRispostaStab[jj] / nOsservazioni;
                         }
                         en[nOsservazioni - 1] = temp / pRun;
                         testoOut += "   E(" + nOsservazioni + "): " + df.format(en[nOsservazioni - 1]) + "\n";
 
                         double temp2 = 0;
                         for (int jj = 0; jj < pRun; jj++) {
-                            temp2 += Math.pow(uSommaG[jj] / nOsservazioni - en[nOsservazioni - 1], 2);
+                            temp2 += Math.pow(tempiRispostaStab[jj] / nOsservazioni - en[nOsservazioni - 1], 2);
                         }
                         vc[nOsservazioni - 1] = temp2 / (pRun - 1);
                         testoOut += "   s^2(" + nOsservazioni + "): " + df.format(vc[nOsservazioni - 1]) + "\n";
@@ -859,33 +874,31 @@ public class FrameWin extends javax.swing.JFrame {
 
                         nRun = 0;
 
-                        uSommaG = new double[pRun];
+                        tempiRispostaStab = new double[pRun];
 
                         statoIniziale();
-                        stopSequenziatore = true;
                     } else {
                         nRun = 0;
                     }
                 }
-                semaforo.release();
             } else {
-                nOsservazioniEffettuate++;
-                if ((nOsservazioniEffettuate - n0) > 0) {
-                    uSommaStat += jobCorrenteCpu2.getTempoRisposta();
+                nOsservazioniEffettuateStat[nRun]++;
+                if (nOsservazioniEffettuateStat[nRun] < osservazioniStatistiche[nRun]) {
+                    tempiRispostaStat[nRun] += jobCorrenteCpu2.getTempoRisposta();
+                    nRun = (nRun + 1) % pRun;
+                    jobCorrenteCpu2 = null;
+                    stopSequenziatore = true;
+                } else {
+                    runStatisticiRimanenti--;
+                }
 
-                    if ((nOsservazioniEffettuate - n0) == nOsservazioni) {
-                        y[nRun - 1] = nOsservazioni;
-                        x[nRun - 1] = uSommaStat;
-                        stopSequenziatore = true;
-                        nRun++;
-                        statoEquilibrio();
-                    }
-
-                    if ((nRun - 1) == pRun) {
-                        calendario.setSimulazione(new Evento(calendario.getClock(), TipoEvento.FINE_SIMULAZIONE));
-                    }
+                if (runStatisticiRimanenti == 0) {
+                    calendario.setSimulazione(new Evento(calendario.getClock(), TipoEvento.FINE_SIMULAZIONE));
+                } else {
+                    statoEquilibrio();
                 }
             }
+            semaforo.release();
         }
         jobCorrenteCpu2 = null;
 
@@ -943,8 +956,11 @@ public class FrameWin extends javax.swing.JFrame {
     }
 
     private void fineSimulazione() {
+        stopSequenziatore = true;
         double xSegn = 0;
         double ySegn = 0;
+        x = tempiRispostaStat;
+        y = osservazioniStatistiche;
         for (int jj = 0; jj < pRun; jj++) {
             xSegn += x[jj];
             ySegn += y[jj];
@@ -984,31 +1000,51 @@ public class FrameWin extends javax.swing.JFrame {
         buttonAvvia.setEnabled(true);
         buttonConvalida.setEnabled(true);
         buttonStabile.setEnabled(false);
-        buttonStabile.setText("SISTEMA STABILE");
+        buttonStabile.setText("AVVIA FASE STATISTICA");
         stopSequenziatore = true;
         fineSimulazione = true;
     }
 
+    private double osservazioniStatistiche[];
+
     public void setStabile() {
         n0 = nOsservazioni;
-        pRun = 40;
+        pRun = 80;
         nRun = 0;
-        setStatoEquilibrio();
+        tempiRispostaStat = new double[pRun];
+        osservazioniStatistiche = new double[pRun];
+        for (int i = 0; i < pRun; i++) {
+            osservazioniStatistiche[i] = genRouting.next(70, 120);
+        }
+
+        runStatisticiRimanenti = pRun;
+        testoOut += "-> fase stat n0: " + n0 + " <-\n";
+        x = new double[pRun];
+        y = new double[pRun];
+        nOsservazioniEffettuateStat = new double[pRun];
+
+        semeArriviStabile = genArrivi.getSeme();
+        semeCentroCpuStabile = genCentroCpu.getSeme();
+        semeCentroCpu2Stabile = genCentroCpu2.getSeme();
+        semeCentroIoStabile = genCentroIo.getSeme();
+        semeRoutingStabile = genRouting.getSeme();
+
         this.stabile = true;
         statoEquilibrio();
     }
 
     private void statoEquilibrio() {
-        uSommaStat = 0d;
-        setnOsservazioni(genRouting.next(50, 100));
+        // impostare i semi sei generatori per ogni run
+        setnOsservazioni((int) osservazioniStatistiche[nRun]);
         nOsservazioniEffettuate = 0;
-    }
+        /*
+        genArrivi.setSeme(semeArriviStabile);
+        genCentroCpu.setSeme(semeCentroCpuStabile);
+        genCentroCpu2.setSeme(semeCentroCpu2Stabile);
+        genCentroIo.setSeme(semeCentroIoStabile);
+        genRouting.setSeme(semeRoutingStabile);
+        */
 
-    private void setStatoEquilibrio() {
-        testoOut += "-> fase stat n0: " + n0 + " <-\n";
-        x = new double[pRun];
-        y = new double[pRun];
-        uSommaStat = 0d;
     }
 
     public void setnOsservazioni(int nOsservazioni) {
@@ -1018,6 +1054,7 @@ public class FrameWin extends javax.swing.JFrame {
 
     /**
      * @param args the command line arguments
+     * @throws java.lang.Exception
      */
     public static void main(String args[]) throws Exception {
         /* Set the Nimbus look and feel */
