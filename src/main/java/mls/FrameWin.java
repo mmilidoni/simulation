@@ -44,13 +44,13 @@ public class FrameWin extends javax.swing.JFrame {
     private int pRun, runStatisticiRimanenti;
     private final int passo = 10;
     private int nOsservazioni, nRun = 0, nOsservazioniEffettuate = 0, n0 = 0;
-    private double tempiRispostaStab[];
+    private double tempiRisposta[];
     private double tempiRispostaStat[];
     private double en[];
     private double vc[];
     private double x[];
     private double y[];
-    private int osservazioniStatisticheEffettuate;
+    private int osservazioniStatisticheEffettuate[];
     private boolean stopSequenziatore = false;
     private boolean stabile = false;
     private boolean convalida = false;
@@ -77,6 +77,7 @@ public class FrameWin extends javax.swing.JFrame {
     private Job jobCorrenteIOStabile;
     private Coda cpuQueueStabile;
     private Coda ioQueueStabile;
+    private double[] medieStatistiche;
 
     /**
      * Creates new form FrameWin
@@ -520,8 +521,8 @@ public class FrameWin extends javax.swing.JFrame {
         try {
             semaforo.acquire();
             setStabile();
-//            buttonAvvia.setEnabled(false);
-//            buttonConvalida.setEnabled(false);
+            buttonAvvia.setEnabled(false);
+            buttonConvalida.setEnabled(false);
             buttonStabile.setEnabled(false);
             buttonStabile.setText("CALCOLO IN CORSO");
             semaforo.release();
@@ -549,8 +550,8 @@ public class FrameWin extends javax.swing.JFrame {
             }
         };
 
-//        buttonAvvia.setEnabled(false);
-//        buttonConvalida.setEnabled(false);
+        buttonAvvia.setEnabled(false);
+        buttonConvalida.setEnabled(false);
         buttonStabile.setEnabled(true);
         worker.execute();
     }//GEN-LAST:event_buttonConvalidaActionPerformed
@@ -583,8 +584,8 @@ public class FrameWin extends javax.swing.JFrame {
             }
         };
 
-//        buttonAvvia.setEnabled(false);
-//        buttonConvalida.setEnabled(false);
+        buttonAvvia.setEnabled(false);
+        buttonConvalida.setEnabled(false);
         buttonStabile.setEnabled(true);
         worker.execute();
     }//GEN-LAST:event_buttonAvviaActionPerformed
@@ -642,37 +643,15 @@ public class FrameWin extends javax.swing.JFrame {
         stopSequenziatore = false;
 
         this.pRun = pRun;
-        tempiRispostaStab = new double[pRun];
+        tempiRisposta = new double[pRun];
         testoOut += "-> stabilizzazione run: " + pRun + " <- \n";
         framePlot1.resetSerieMedia();
         framePlot1.resetSerieVarianza();
         for (int n = passo; n <= nMax && !fineSimulazione && !stabile; n += passo) {
             setnOsservazioni(n);
+            
             sequenziatore();
         }
-    }
-
-    private void statoIniziale() {
-        if (convalida) {
-            cpuQueue = new CodaFIFO<>();
-            ioQueue = new CodaFIFO<>();
-        } else {
-            cpuQueue = new CodaSPTF<>(new JobComparator());
-            ioQueue = new CodaLIFO<>();
-        }
-
-        genArrivi.setSeme(semeArrivi);
-        genCentroCpu.setSeme(semeCentroCpu);
-        genCentroCpu2.setSeme(semeCentroCpu2);
-        genCentroIo.setSeme(semeCentroIo);
-        genRouting.setSeme(semeRouting);
-
-        calendario = new Calendario();
-        calendario.addArrivo(genArrivi.next());
-        jobCorrenteCpu = null;
-        jobCorrenteCpu2 = null;
-        jobCorrenteIO = null;
-        nOsservazioniEffettuate = 0;
     }
 
     private void sequenziatore() {
@@ -767,7 +746,7 @@ public class FrameWin extends javax.swing.JFrame {
 
             jobCorrenteCpu.setTempoUscita(calendario.getClock());
             if (!stabile) {
-                tempiRispostaStab[nRun++] += jobCorrenteCpu.getTempoRisposta();
+                tempiRisposta[nRun++] += jobCorrenteCpu.getTempoRisposta();
                 jobCorrenteCpu = null;
 
                 if (nRun == pRun) {
@@ -777,14 +756,14 @@ public class FrameWin extends javax.swing.JFrame {
 
                         double temp = 0;
                         for (int jj = 0; jj < pRun; jj++) {
-                            temp += tempiRispostaStab[jj] / nOsservazioni;
+                            temp += tempiRisposta[jj] / nOsservazioni;
                         }
                         en[nOsservazioni - 1] = temp / pRun;
                         testoOut += "   E(" + nOsservazioni + "): " + df.format(en[nOsservazioni - 1]) + "\n";
 
                         double temp2 = 0;
                         for (int jj = 0; jj < pRun; jj++) {
-                            temp2 += Math.pow(tempiRispostaStab[jj] / nOsservazioni - en[nOsservazioni - 1], 2);
+                            temp2 += Math.pow(tempiRisposta[jj] / nOsservazioni - en[nOsservazioni - 1], 2);
                         }
                         vc[nOsservazioni - 1] = temp2 / (pRun - 1);
                         testoOut += "   s^2(" + nOsservazioni + "): " + df.format(vc[nOsservazioni - 1]) + "\n";
@@ -794,7 +773,7 @@ public class FrameWin extends javax.swing.JFrame {
 
                         nRun = 0;
 
-                        tempiRispostaStab = new double[pRun];
+                        tempiRisposta = new double[pRun];
 
                         statoIniziale();
                         stopSequenziatore = true;
@@ -803,11 +782,12 @@ public class FrameWin extends javax.swing.JFrame {
                     }
                 }
             } else {
-                if (osservazioniStatisticheEffettuate < osservazioniStatistiche[nRun]) {
-                    osservazioniStatisticheEffettuate++;
+                if (osservazioniStatisticheEffettuate[nRun] < osservazioniStatistiche[nRun]) {
+                    osservazioniStatisticheEffettuate[nRun]++;
                     tempiRispostaStat[nRun] += jobCorrenteCpu.getTempoRisposta();
                     jobCorrenteCpu = null;
-                    if (osservazioniStatisticheEffettuate == osservazioniStatistiche[nRun]) {
+                    if (osservazioniStatisticheEffettuate[nRun] == osservazioniStatistiche[nRun]) {
+                        medieStatistiche[nRun] = tempiRispostaStat[nRun] / osservazioniStatisticheEffettuate[nRun];
                         runStatisticiRimanenti--;
                         if (runStatisticiRimanenti == 0) {
                             calendario.setSimulazione(new Evento(calendario.getClock(), TipoEvento.FINE_SIMULAZIONE));
@@ -853,7 +833,7 @@ public class FrameWin extends javax.swing.JFrame {
             }
             jobCorrenteCpu2.setTempoUscita(calendario.getClock());
             if (!stabile) {
-                tempiRispostaStab[nRun++] += jobCorrenteCpu2.getTempoRisposta();
+                tempiRisposta[nRun++] += jobCorrenteCpu2.getTempoRisposta();
                 jobCorrenteCpu2 = null;
 
                 if (nRun == pRun) {
@@ -863,14 +843,14 @@ public class FrameWin extends javax.swing.JFrame {
 
                         double temp = 0;
                         for (int jj = 0; jj < pRun; jj++) {
-                            temp += tempiRispostaStab[jj] / nOsservazioni;
+                            temp += tempiRisposta[jj] / nOsservazioni;
                         }
                         en[nOsservazioni - 1] = temp / pRun;
                         testoOut += "   E(" + nOsservazioni + "): " + df.format(en[nOsservazioni - 1]) + "\n";
 
                         double temp2 = 0;
                         for (int jj = 0; jj < pRun; jj++) {
-                            temp2 += Math.pow(tempiRispostaStab[jj] / nOsservazioni - en[nOsservazioni - 1], 2);
+                            temp2 += Math.pow(tempiRisposta[jj] / nOsservazioni - en[nOsservazioni - 1], 2);
                         }
                         vc[nOsservazioni - 1] = temp2 / (pRun - 1);
                         testoOut += "   s^2(" + nOsservazioni + "): " + df.format(vc[nOsservazioni - 1]) + "\n";
@@ -880,7 +860,7 @@ public class FrameWin extends javax.swing.JFrame {
 
                         nRun = 0;
 
-                        tempiRispostaStab = new double[pRun];
+                        tempiRisposta = new double[pRun];
 
                         statoIniziale();
                     } else {
@@ -965,33 +945,34 @@ public class FrameWin extends javax.swing.JFrame {
 
     private void fineSimulazione() {
         stopSequenziatore = true;
-        double xSegn = 0;
-        double ySegn = 0;
-        x = tempiRispostaStat;
+        double mediaTempi = 0;
+        double mediaOsservazioni = 0;
+        x = medieStatistiche;
         y = osservazioniStatistiche;
         for (int jj = 0; jj < pRun; jj++) {
-            xSegn += x[jj];
-            ySegn += y[jj];
+            mediaOsservazioni += osservazioniStatistiche[jj];
+            mediaTempi += medieStatistiche[jj];
         }
-        xSegn /= pRun;
-        ySegn /= pRun;
+        mediaTempi /= pRun;
+        mediaOsservazioni /= pRun;
 
         double xSommaQDiff = 0;
         double ySommaQDiff = 0;
         double xySommaQDiff = 0;
         for (int jj = 0; jj < pRun; jj++) {
-            xSommaQDiff += Math.pow(x[jj] - xSegn, 2);
-            ySommaQDiff += Math.pow(y[jj] - ySegn, 2);
-            xySommaQDiff += (x[jj] - xSegn) * (y[jj] - ySegn);
+            xSommaQDiff += Math.pow(x[jj] - mediaTempi, 2);
+            ySommaQDiff += Math.pow(y[jj] - mediaOsservazioni, 2);
+            xySommaQDiff += (x[jj] - mediaTempi) * (y[jj] - mediaOsservazioni);
         }
 
         double s2_11 = xSommaQDiff / (pRun - 1);
         double s2_22 = ySommaQDiff / (pRun - 1);
         double s2_12 = xySommaQDiff / (pRun - 1);
 
-        double f = xSegn / ySegn;
+        //double f = xSegn / ySegn;
+        double f = mediaTempi;
         double s2 = s2_11 - 2 * f * s2_12 + f * f * s2_22;
-        double d = Math.sqrt(s2) / (ySegn * Math.sqrt(pRun));
+        double d = Math.sqrt(s2) / (mediaOsservazioni * Math.sqrt(pRun));
         double mediaInferiore = f - d * 1.645;
         double mediaSuperiore = f + d * 1.645;
 
@@ -1015,23 +996,46 @@ public class FrameWin extends javax.swing.JFrame {
 
     private double osservazioniStatistiche[];
 
+    private void statoIniziale() {
+        if (convalida) {
+            cpuQueue = new CodaFIFO<>();
+            ioQueue = new CodaFIFO<>();
+        } else {
+            cpuQueue = new CodaSPTF<>(new JobComparator());
+            ioQueue = new CodaLIFO<>();
+        }
+
+        genArrivi.setSeme(semeArrivi);
+        genCentroCpu.setSeme(semeCentroCpu);
+        genCentroCpu2.setSeme(semeCentroCpu2);
+        genCentroIo.setSeme(semeCentroIo);
+        genRouting.setSeme(semeRouting);
+
+        calendario = new Calendario();
+        calendario.addArrivo(genArrivi.next());
+        jobCorrenteCpu = null;
+        jobCorrenteCpu2 = null;
+        jobCorrenteIO = null;
+        nOsservazioniEffettuate = 0;
+    }
+
     public void setStabile() {
         n0 = nOsservazioni;
-        pRun = 4;
+        pRun = 40;
         nRun = 0;
         tempiRispostaStat = new double[pRun];
         osservazioniStatistiche = new double[pRun];
+        medieStatistiche = new double[pRun];
         for (int i = 0; i < pRun; i++) {
-            osservazioniStatistiche[i] = genRouting.next(5, 10);
+            osservazioniStatistiche[i] = genRouting.next(50, 100);
         }
 
         cpuQueueStabile = cpuQueue.clona();
-        ioQueueStabile = cpuQueue.clona();
+        ioQueueStabile = ioQueue.clona();
         runStatisticiRimanenti = pRun;
         testoOut += "-> fase stat n0: " + n0 + " <-\n";
-        x = new double[pRun];
-        y = new double[pRun];
-        osservazioniStatisticheEffettuate = 0;
+
+        osservazioniStatisticheEffettuate = new int[pRun];
 
         calendarioStabile = calendario.clona();
         if (jobCorrenteCpu != null) {
@@ -1051,27 +1055,26 @@ public class FrameWin extends javax.swing.JFrame {
     }
 
     private void statoEquilibrio() {
-        // impostare i semi sei generatori per ogni run
-        setnOsservazioni((int) osservazioniStatistiche[nRun]);
-        nOsservazioniEffettuate = 0;
+        /*
+         calendario = calendarioStabile.clona();
+         if (jobCorrenteCpuStabile != null) {
+         jobCorrenteCpu = jobCorrenteCpuStabile.clona();
+         }
+         if (jobCorrenteIOStabile != null) {
+         jobCorrenteIO = jobCorrenteIOStabile.clona();
+         }
 
-        calendario = calendarioStabile.clona();
-        if (jobCorrenteCpuStabile != null) {
-            jobCorrenteCpu = jobCorrenteCpuStabile.clona();
-        }
-        if (jobCorrenteIOStabile != null) {
-            jobCorrenteIO = jobCorrenteIOStabile.clona();
-        }
-
-        cpuQueue = cpuQueueStabile.clona();
-        ioQueue = ioQueueStabile.clona();
+         cpuQueue = cpuQueueStabile.clona();
+         ioQueue = ioQueueStabile.clona();
+         */
         genArrivi.setSeme(semeArriviStabile);
         genCentroCpu.setSeme(semeCentroCpuStabile);
         genCentroCpu2.setSeme(semeCentroCpu2Stabile);
         genCentroIo.setSeme(semeCentroIoStabile);
         genRouting.setSeme(semeRoutingStabile);
 
-        osservazioniStatisticheEffettuate = 0;
+        setnOsservazioni((int) osservazioniStatistiche[nRun]);
+        nOsservazioniEffettuate = 0;
     }
 
     public void setnOsservazioni(int nOsservazioni) {
