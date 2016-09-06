@@ -649,7 +649,6 @@ public class FrameWin extends javax.swing.JFrame {
         framePlot1.resetSerieVarianza();
         for (int n = passo; n <= nMax && !fineSimulazione && !stabile; n += passo) {
             setnOsservazioni(n);
-            
             sequenziatore();
         }
     }
@@ -1021,7 +1020,7 @@ public class FrameWin extends javax.swing.JFrame {
 
     public void setStabile() {
         n0 = nOsservazioni;
-        pRun = 40;
+        pRun = 90;
         nRun = 0;
         tempiRispostaStat = new double[pRun];
         osservazioniStatistiche = new double[pRun];
