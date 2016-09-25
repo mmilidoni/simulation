@@ -531,9 +531,11 @@ public class FrameWin extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_buttonStabileActionPerformed
 
+    SwingWorker workerConvalida;
+
     private void buttonConvalidaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonConvalidaActionPerformed
         convalida = true;
-        SwingWorker worker = new SwingWorker<Boolean, Void>() {
+        workerConvalida = new SwingWorker<Boolean, Void>() {
             @Override
             protected Boolean doInBackground() throws Exception {
                 try {
@@ -553,7 +555,7 @@ public class FrameWin extends javax.swing.JFrame {
         buttonAvvia.setEnabled(false);
         buttonConvalida.setEnabled(false);
         buttonStabile.setEnabled(true);
-        worker.execute();
+        workerConvalida.execute();
     }//GEN-LAST:event_buttonConvalidaActionPerformed
 
     private void textTsCpuActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_textTsCpuActionPerformed
@@ -655,6 +657,9 @@ public class FrameWin extends javax.swing.JFrame {
 
     private void sequenziatore() {
         while (!stopSequenziatore) {
+            if (nOsservazioni == 1010) {
+                buttonStabile.doClick();
+            }
             Evento e = calendario.next();
             if (null != e.getTipo()) {
                 switch (e.getTipo()) {
@@ -780,20 +785,18 @@ public class FrameWin extends javax.swing.JFrame {
                         nRun = 0;
                     }
                 }
-            } else {
-                if (osservazioniStatisticheEffettuate[nRun] < osservazioniStatistiche[nRun]) {
-                    osservazioniStatisticheEffettuate[nRun]++;
-                    tempiRispostaStat[nRun] += jobCorrenteCpu.getTempoRisposta();
-                    jobCorrenteCpu = null;
-                    if (osservazioniStatisticheEffettuate[nRun] == osservazioniStatistiche[nRun]) {
-                        medieStatistiche[nRun] = tempiRispostaStat[nRun] / osservazioniStatisticheEffettuate[nRun];
-                        runStatisticiRimanenti--;
-                        if (runStatisticiRimanenti == 0) {
-                            calendario.setSimulazione(new Evento(calendario.getClock(), TipoEvento.FINE_SIMULAZIONE));
-                        } else {
-                            nRun++;
-                            statoEquilibrio();
-                        }
+            } else if (osservazioniStatisticheEffettuate[nRun] < osservazioniStatistiche[nRun]) {
+                osservazioniStatisticheEffettuate[nRun]++;
+                tempiRispostaStat[nRun] += jobCorrenteCpu.getTempoRisposta();
+                jobCorrenteCpu = null;
+                if (osservazioniStatisticheEffettuate[nRun] == osservazioniStatistiche[nRun]) {
+                    medieStatistiche[nRun] = tempiRispostaStat[nRun] / osservazioniStatisticheEffettuate[nRun];
+                    runStatisticiRimanenti--;
+                    if (runStatisticiRimanenti == 0) {
+                        calendario.setSimulazione(new Evento(calendario.getClock(), TipoEvento.FINE_SIMULAZIONE));
+                    } else {
+                        nRun++;
+                        statoEquilibrio();
                     }
                 }
             }
@@ -862,28 +865,25 @@ public class FrameWin extends javax.swing.JFrame {
                         tempiRisposta = new double[pRun];
 
                         statoIniziale();
+                        stopSequenziatore = true;
                     } else {
                         nRun = 0;
                     }
                 }
-            } else {
-                /*
-                 osservazioniStatisticheEffettuate[nRun]++;
-                 if (osservazioniStatisticheEffettuate[nRun] < osservazioniStatistiche[nRun]) {
-                 tempiRispostaStat[nRun] += jobCorrenteCpu2.getTempoRisposta();
-                 nRun = (nRun + 1) % pRun;
-                 jobCorrenteCpu2 = null;
-                 stopSequenziatore = true;
-                 } else {
-                 runStatisticiRimanenti--;
-                 }
-
-                 if (runStatisticiRimanenti == 0) {
-                 calendario.setSimulazione(new Evento(calendario.getClock(), TipoEvento.FINE_SIMULAZIONE));
-                 } else {
-                 statoEquilibrio();
-                 }
-                 */
+            } else if (osservazioniStatisticheEffettuate[nRun] < osservazioniStatistiche[nRun]) {
+                osservazioniStatisticheEffettuate[nRun]++;
+                tempiRispostaStat[nRun] += jobCorrenteCpu2.getTempoRisposta();
+                jobCorrenteCpu2 = null;
+                if (osservazioniStatisticheEffettuate[nRun] == osservazioniStatistiche[nRun]) {
+                    medieStatistiche[nRun] = tempiRispostaStat[nRun] / osservazioniStatisticheEffettuate[nRun];
+                    runStatisticiRimanenti--;
+                    if (runStatisticiRimanenti == 0) {
+                        calendario.setSimulazione(new Evento(calendario.getClock(), TipoEvento.FINE_SIMULAZIONE));
+                    } else {
+                        nRun++;
+                        statoEquilibrio();
+                    }
+                }
             }
             semaforo.release();
         }
@@ -1054,24 +1054,6 @@ public class FrameWin extends javax.swing.JFrame {
     }
 
     private void statoEquilibrio() {
-        /*
-         calendario = calendarioStabile.clona();
-         if (jobCorrenteCpuStabile != null) {
-         jobCorrenteCpu = jobCorrenteCpuStabile.clona();
-         }
-         if (jobCorrenteIOStabile != null) {
-         jobCorrenteIO = jobCorrenteIOStabile.clona();
-         }
-
-         cpuQueue = cpuQueueStabile.clona();
-         ioQueue = ioQueueStabile.clona();
-         */
-        genArrivi.setSeme(semeArriviStabile);
-        genCentroCpu.setSeme(semeCentroCpuStabile);
-        genCentroCpu2.setSeme(semeCentroCpu2Stabile);
-        genCentroIo.setSeme(semeCentroIoStabile);
-        genRouting.setSeme(semeRoutingStabile);
-
         setnOsservazioni((int) osservazioniStatistiche[nRun]);
         nOsservazioniEffettuate = 0;
     }
