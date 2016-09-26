@@ -27,7 +27,7 @@ import mls.util.TipoEvento;
  *
  * @author Michele Milidoni <michelemilidoni@gmail.com>
  */
-public class FrameWin extends javax.swing.JFrame {
+public class Main extends javax.swing.JFrame {
 
     private Calendario calendario;
     private Coda<Job> cpuQueue;
@@ -82,7 +82,7 @@ public class FrameWin extends javax.swing.JFrame {
     /**
      * Creates new form FrameWin
      */
-    public FrameWin() {
+    public Main() {
         initComponents();
         buttonAvvia.setEnabled(true);
         buttonConvalida.setEnabled(true);
@@ -527,7 +527,7 @@ public class FrameWin extends javax.swing.JFrame {
             buttonStabile.setText("CALCOLO IN CORSO");
             semaforo.release();
         } catch (InterruptedException ex) {
-            Logger.getLogger(FrameWin.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         }
     }//GEN-LAST:event_buttonStabileActionPerformed
 
@@ -545,7 +545,7 @@ public class FrameWin extends javax.swing.JFrame {
                             Double.parseDouble(textTsIO.getText())
                     );
                 } catch (Exception e) {
-                    Logger.getLogger(FrameWin.class
+                    Logger.getLogger(Main.class
                             .getName()).log(Level.SEVERE, null, e);
                 }
                 return true;
@@ -579,7 +579,7 @@ public class FrameWin extends javax.swing.JFrame {
                             Double.parseDouble(textTsIO.getText())
                     );
                 } catch (Exception e) {
-                    Logger.getLogger(FrameWin.class
+                    Logger.getLogger(Main.class
                             .getName()).log(Level.SEVERE, null, e);
                 }
                 return true;
@@ -609,6 +609,8 @@ public class FrameWin extends javax.swing.JFrame {
     }//GEN-LAST:event_textTsIOActionPerformed
 
     public void avviaSimulazione(int pRun, double Ta, double TsCPU, double TsIO) {
+
+        // fase di inizializzazione
         textLimiteInferiore.setText("");
         textLimiteSuperiore.setText("");
         textPuntoCentrale.setText("");
@@ -616,12 +618,16 @@ public class FrameWin extends javax.swing.JFrame {
         textOutput.setText("");
         testoOut = "-> INIZIO SIMULAZIONE <-\n";
         int nMax = 4000;
+
         genRouting = new GeneratoreUniforme(semeRouting);
+
+        // impostazione dei generatori se si è in fase di convalida
         if (convalida) {
             genArrivi = new GeneratorePoissoniano(Ta, new GeneratoreUniforme(semeArrivi));
             genCentroCpu = new GeneratoreEsponenziale(TsCPU, new GeneratoreUniforme(semeCentroCpu));
             genCentroCpu2 = new GeneratoreEsponenziale(TsCPU, new GeneratoreUniforme(semeCentroCpu2));
             genCentroIo = new GeneratoreEsponenziale(TsIO, new GeneratoreUniforme(semeCentroIo));
+            // impostazione dei generatori se si è in fase normale
         } else {
             genArrivi = new GeneratoreEsponenziale(Ta, new GeneratoreUniforme(semeArrivi));
             genCentroCpu = new Generatore3Erlangiano(TsCPU, semeCentroCpu);
@@ -631,6 +637,7 @@ public class FrameWin extends javax.swing.JFrame {
 
         statoIniziale();
 
+        // inizializzazione delle variabili
         textGeneratoreArrivi.setText(genArrivi.getClass().getName());
         textGeneratoreCentri.setText(genCentroCpu.getClass().getName());
         textCodaCPU.setText(cpuQueue.getClass().getName());
@@ -649,6 +656,8 @@ public class FrameWin extends javax.swing.JFrame {
         testoOut += "-> stabilizzazione run: " + pRun + " <- \n";
         framePlot1.resetSerieMedia();
         framePlot1.resetSerieVarianza();
+
+        // avvio del sequenziatore
         for (int n = passo; n <= nMax && !fineSimulazione && !stabile; n += passo) {
             setnOsservazioni(n);
             sequenziatore();
@@ -660,6 +669,8 @@ public class FrameWin extends javax.swing.JFrame {
             if (nOsservazioni == 1010) {
                 buttonStabile.doClick();
             }
+
+            // preleva dal calendario l'evento più vicino
             Evento e = calendario.next();
             if (null != e.getTipo()) {
                 switch (e.getTipo()) {
@@ -694,20 +705,26 @@ public class FrameWin extends javax.swing.JFrame {
     }
 
     private void arrivo() {
+        // schedula il prossimo arrivo
         calendario.addArrivo(genArrivi.next());
 
+        // imposta il tempo di arrivo ed 
+        // il tempo di processamento del nuovo job
         Job job = new Job();
         job.setTempoArrivo(calendario.getClock());
         job.setTempoProcessamento(genCentroCpu.next());
 
+        // se la cpu è libera, viene occupata dal job
         if (jobCorrenteCpu == null) {
             jobCorrenteCpu = job;
             calendario.addCpu(jobCorrenteCpu.getTempoProcessamento());
+            // altrimenti il job viene accodato nella coda della cpu
         } else {
             cpuQueue.metti(job);
         }
     }
 
+    // metodo invocato solo per la variante del simulatore
     private void arrivo2CPU() {
         calendario.addArrivo(genArrivi.next());
 
@@ -728,31 +745,49 @@ public class FrameWin extends javax.swing.JFrame {
     }
 
     private void fineCPU() {
+
+        // estrazione della variabile aleatoria
+        // per il routing
         double routing = genRouting.next();
+
+        // se la variabile aleatoria routing < 0.9, il job
+        // rimane nel sistema e viene inviato all'I/O
         if (routing < 0.9) {
             Job temp = jobCorrenteCpu.clona();
             jobCorrenteCpu = null;
+
+            // se I/O è libero, viene occupato dal job
             if (jobCorrenteIO == null) {
                 jobCorrenteIO = temp;
                 jobCorrenteIO.setTempoProcessamento(genCentroIo.next());
                 calendario.addIo(jobCorrenteIO.getTempoProcessamento());
+
+                //altrimenti il job viene accodato nella coda I/O
             } else {
                 ioQueue.metti(temp);
             }
 
+            // altrimenti il job esce dal sistema
         } else {
             try {
                 semaforo.acquire();
             } catch (InterruptedException ex) {
-                Logger.getLogger(FrameWin.class
+                Logger.getLogger(Main.class
                         .getName()).log(Level.SEVERE, null, ex);
             }
 
+            // imposta il tempo di uscita del job
             jobCorrenteCpu.setTempoUscita(calendario.getClock());
+
+            // se si è nella fase di stabilizzazione (NOT stabile) 
+            // vengono calcolate media e varianza campionarie
+            // con gli stimatori di Gordon
             if (!stabile) {
                 tempiRisposta[nRun++] += jobCorrenteCpu.getTempoRisposta();
                 jobCorrenteCpu = null;
 
+                // se si sono raggiunti i run desiderati
+                // vengono calcolate media e varianza campionarie
                 if (nRun == pRun) {
                     nOsservazioniEffettuate++;
                     if (nOsservazioniEffettuate == nOsservazioni) {
@@ -785,6 +820,10 @@ public class FrameWin extends javax.swing.JFrame {
                         nRun = 0;
                     }
                 }
+
+                // altrimenti si è in fase statistica
+                // nella quale vengono effettuate le osservazioni
+                // per il calcolo della media statistica
             } else if (osservazioniStatisticheEffettuate[nRun] < osservazioniStatistiche[nRun]) {
                 osservazioniStatisticheEffettuate[nRun]++;
                 tempiRispostaStat[nRun] += jobCorrenteCpu.getTempoRisposta();
@@ -792,6 +831,9 @@ public class FrameWin extends javax.swing.JFrame {
                 if (osservazioniStatisticheEffettuate[nRun] == osservazioniStatistiche[nRun]) {
                     medieStatistiche[nRun] = tempiRispostaStat[nRun] / osservazioniStatisticheEffettuate[nRun];
                     runStatisticiRimanenti--;
+
+                    // se si è raggiunto il numero di run
+                    // si schedula l'evento di fine simulazione
                     if (runStatisticiRimanenti == 0) {
                         calendario.setSimulazione(new Evento(calendario.getClock(), TipoEvento.FINE_SIMULAZIONE));
                     } else {
@@ -804,15 +846,21 @@ public class FrameWin extends javax.swing.JFrame {
         }
         jobCorrenteCpu = null;
 
+        // se la coda cpu non è vuota
+        // viene estratto il job dalla coda, occupata la cpu
+        // e schedulato l'evento fineCPU
         if (!cpuQueue.isEmpty()) {
             jobCorrenteCpu = (Job) cpuQueue.togli();
             jobCorrenteCpu.setTempoProcessamento(genCentroCpu.next());
             calendario.addCpu(jobCorrenteCpu.getTempoProcessamento());
+            // altrimenti il prossimo evento fineCPU viene 
+            // impostato ad infinito
         } else {
             calendario.resetCpu();
         }
     }
 
+    // segmento utilizzato per la variante del simulatore (analogo a fineCPU)
     private void fineCPU2() {
         double routing = genRouting.next();
         if (routing < 0.9) {
@@ -830,7 +878,7 @@ public class FrameWin extends javax.swing.JFrame {
             try {
                 semaforo.acquire();
             } catch (InterruptedException ex) {
-                Logger.getLogger(FrameWin.class
+                Logger.getLogger(Main.class
                         .getName()).log(Level.SEVERE, null, ex);
             }
             jobCorrenteCpu2.setTempoUscita(calendario.getClock());
@@ -900,24 +948,35 @@ public class FrameWin extends javax.swing.JFrame {
 
     private void fineIO() {
         Job temp = jobCorrenteIO.clona();
+        // il centro I/O viene liberato dal job
         jobCorrenteIO = null;
+
+        // se la CPU è libera, viene occupata dal job
+        // e viene schedulato l'evento fineCPU
         if (jobCorrenteCpu == null) {
             jobCorrenteCpu = temp;
             jobCorrenteCpu.setTempoProcessamento(genCentroCpu.next());
             calendario.addCpu(jobCorrenteCpu.getTempoProcessamento());
+            // altrimenti il job viene accodato alla coda CPU
         } else {
             cpuQueue.metti(temp);
         }
 
+        // se la coda I/O non è vuota 
+        // viene estratto il job dalla coda I/O
+        // e il centro I/O viene occupato dal job
         if (!ioQueue.isEmpty()) {
             jobCorrenteIO = (Job) ioQueue.togli();
             jobCorrenteIO.setTempoProcessamento(genCentroIo.next());
             calendario.addIo(jobCorrenteIO.getTempoProcessamento());
+            // altrimenti il prossimo evento fineIO viene 
+            // impostato ad infinito
         } else {
             calendario.resetIo();
         }
     }
 
+    // segmento utilizzato dalla variante del simulatore
     private void fineIO2CPU() {
         Job temp = jobCorrenteIO.clona();
         jobCorrenteIO = null;
@@ -943,6 +1002,9 @@ public class FrameWin extends javax.swing.JFrame {
     }
 
     private void fineSimulazione() {
+        
+        // inizio calcolo della media del tempo di risposta
+        // con il metodo classico
         stopSequenziatore = true;
         double mediaTempi = 0;
         double mediaOsservazioni = 0;
@@ -955,6 +1017,7 @@ public class FrameWin extends javax.swing.JFrame {
         mediaTempi /= pRun;
         mediaOsservazioni /= pRun;
 
+        // calcolo della matrice S
         double xSommaQDiff = 0;
         double ySommaQDiff = 0;
         double xySommaQDiff = 0;
@@ -968,6 +1031,8 @@ public class FrameWin extends javax.swing.JFrame {
         double s2_22 = ySommaQDiff / (pRun - 1);
         double s2_12 = xySommaQDiff / (pRun - 1);
 
+        // calcolo della media del tempo di risposta del sistema
+        // e dell'intervallo di confidenza al 90% 
         //double f = xSegn / ySegn;
         double f = mediaTempi;
         double s2 = s2_11 - 2 * f * s2_12 + f * f * s2_22;
@@ -1090,7 +1155,7 @@ public class FrameWin extends javax.swing.JFrame {
         java.awt.EventQueue.invokeLater(new Runnable() {
             @Override
             public void run() {
-                new FrameWin().setVisible(true);
+                new Main().setVisible(true);
             }
         });
     }
