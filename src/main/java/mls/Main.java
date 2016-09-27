@@ -15,13 +15,14 @@ import mls.generatori.Generatore3Erlangiano;
 import mls.generatori.GeneratoreEsponenziale;
 import mls.generatori.GeneratorePoissoniano;
 import mls.generatori.GeneratoreUniforme;
-import mls.util.Coda;
 import mls.util.CodaFIFO;
 import mls.util.CodaLIFO;
 import mls.util.CodaSPTF;
-import mls.util.Generatore;
 import mls.util.JobComparator;
 import mls.util.TipoEvento;
+import mls.util.Generatore;
+import mls.util.Coda;
+import mls.util.ConfigurazioneSimulazioneFactory;
 
 /**
  *
@@ -78,6 +79,7 @@ public class Main extends javax.swing.JFrame {
     private Coda cpuQueueStabile;
     private Coda ioQueueStabile;
     private double[] medieStatistiche;
+    private double osservazioniStatistiche[];
 
     /**
      * Creates new form FrameWin
@@ -608,8 +610,9 @@ public class Main extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_textTsIOActionPerformed
 
-    public void avviaSimulazione(int pRun, double Ta, double TsCPU, double TsIO) {
+    private ConfigurazioneSimulazioneFactory configurazioneSimulazione;
 
+    public void avviaSimulazione(int pRun, double Ta, double TsCPU, double TsIO) {
         // fase di inizializzazione
         textLimiteInferiore.setText("");
         textLimiteSuperiore.setText("");
@@ -621,19 +624,12 @@ public class Main extends javax.swing.JFrame {
 
         genRouting = new GeneratoreUniforme(semeRouting);
 
-        // impostazione dei generatori se si è in fase di convalida
-        if (convalida) {
-            genArrivi = new GeneratorePoissoniano(Ta, new GeneratoreUniforme(semeArrivi));
-            genCentroCpu = new GeneratoreEsponenziale(TsCPU, new GeneratoreUniforme(semeCentroCpu));
-            genCentroCpu2 = new GeneratoreEsponenziale(TsCPU, new GeneratoreUniforme(semeCentroCpu2));
-            genCentroIo = new GeneratoreEsponenziale(TsIO, new GeneratoreUniforme(semeCentroIo));
-            // impostazione dei generatori se si è in fase normale
-        } else {
-            genArrivi = new GeneratoreEsponenziale(Ta, new GeneratoreUniforme(semeArrivi));
-            genCentroCpu = new Generatore3Erlangiano(TsCPU, semeCentroCpu);
-            genCentroCpu2 = new Generatore3Erlangiano(TsCPU, semeCentroCpu2);
-            genCentroIo = new Generatore3Erlangiano(TsIO, semeCentroIo);
-        }
+        configurazioneSimulazione = ConfigurazioneSimulazioneFactory.getFactory(convalida);
+        
+        genArrivi = configurazioneSimulazione.getGeneratoreArrivi(Ta, semeArrivi);
+        genCentroCpu = configurazioneSimulazione.getGeneratoreCentroCPU(TsCPU, semeCentroCpu);
+        genCentroCpu2 = configurazioneSimulazione.getGeneratoreCentroCPU2(TsCPU, semeCentroCpu2);
+        genCentroIo = configurazioneSimulazione.getGeneratoreCentroIO(TsIO, semeCentroIo);
 
         statoIniziale();
 
@@ -1002,7 +998,7 @@ public class Main extends javax.swing.JFrame {
     }
 
     private void fineSimulazione() {
-        
+
         // inizio calcolo della media del tempo di risposta
         // con il metodo classico
         stopSequenziatore = true;
@@ -1058,16 +1054,9 @@ public class Main extends javax.swing.JFrame {
         fineSimulazione = true;
     }
 
-    private double osservazioniStatistiche[];
-
     private void statoIniziale() {
-        if (convalida) {
-            cpuQueue = new CodaFIFO<>();
-            ioQueue = new CodaFIFO<>();
-        } else {
-            cpuQueue = new CodaSPTF<>(new JobComparator());
-            ioQueue = new CodaLIFO<>();
-        }
+        cpuQueue = configurazioneSimulazione.getCpuQueue();
+        ioQueue = configurazioneSimulazione.getIoQueue();
 
         genArrivi.setSeme(semeArrivi);
         genCentroCpu.setSeme(semeCentroCpu);
